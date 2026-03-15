@@ -14,6 +14,7 @@ const VIBES = [
   { label: "Culture", emoji: "🎭" },
   { label: "Outdoors", emoji: "🌿" },
   { label: "Family", emoji: "🎠" },
+  { label: "LGBT+", emoji: "🏳️‍🌈" },
 ];
 
 interface Props {

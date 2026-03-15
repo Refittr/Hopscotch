@@ -83,8 +83,33 @@ export async function POST(req: NextRequest) {
       types: string[]; category: string; photoRef?: string; isOpen?: boolean; vicinity?: string;
     }>();
 
-    await Promise.all(
-      SEARCH_TYPES.map(async (type) => {
+    const addPlace = (place: GooglePlace, extraType?: string) => {
+      if (!place.place_id || !place.geometry?.location) return;
+      const types = [...(place.types ?? []), ...(extraType ? [extraType] : [])];
+      if (collected.has(place.place_id)) {
+        if (extraType) {
+          const existing = collected.get(place.place_id)!;
+          if (!existing.types.includes(extraType)) existing.types.push(extraType);
+        }
+        return;
+      }
+      collected.set(place.place_id, {
+        placeId:      place.place_id,
+        name:         place.name ?? "Unknown",
+        lat:          place.geometry.location.lat,
+        lng:          place.geometry.location.lng,
+        rating:       place.rating,
+        ratingsCount: place.user_ratings_total,
+        types,
+        category:     getCategoryLabel(types),
+        photoRef:     place.photos?.[0]?.photo_reference,
+        isOpen:       place.opening_hours?.open_now,
+        vicinity:     place.vicinity,
+      });
+    };
+
+    await Promise.all([
+      ...SEARCH_TYPES.map(async (type) => {
         try {
           const url =
             `https://maps.googleapis.com/maps/api/place/nearbysearch/json` +
@@ -92,30 +117,24 @@ export async function POST(req: NextRequest) {
           const res  = await fetch(url, { next: { revalidate: 0 } });
           const data = await res.json();
           if (data.status !== "OK" || !data.results) return;
-
-          for (const place of data.results as GooglePlace[]) {
-            if (!place.place_id || !place.geometry?.location) continue;
-            if (collected.has(place.place_id)) continue;
-            const types = place.types ?? [];
-            collected.set(place.place_id, {
-              placeId:      place.place_id,
-              name:         place.name ?? "Unknown",
-              lat:          place.geometry.location.lat,
-              lng:          place.geometry.location.lng,
-              rating:       place.rating,
-              ratingsCount: place.user_ratings_total,
-              types,
-              category:     getCategoryLabel(types),
-              photoRef:     place.photos?.[0]?.photo_reference,
-              isOpen:       place.opening_hours?.open_now,
-              vicinity:     place.vicinity,
-            });
+          for (const place of data.results as GooglePlace[]) addPlace(place);
+        } catch { /* non-fatal */ }
+      }),
+      // LGBT keyword search — tags results with "lgbtq_venue"
+      (async () => {
+        try {
+          for (const keyword of ["gay bar", "LGBT venue"]) {
+            const url =
+              `https://maps.googleapis.com/maps/api/place/nearbysearch/json` +
+              `?location=${lat},${lng}&radius=${RADIUS}&keyword=${encodeURIComponent(keyword)}&key=${GMAPS_KEY()}`;
+            const res  = await fetch(url, { next: { revalidate: 0 } });
+            const data = await res.json();
+            if (data.status !== "OK" || !data.results) continue;
+            for (const place of data.results as GooglePlace[]) addPlace(place, "lgbtq_venue");
           }
-        } catch {
-          // non-fatal: one type failing doesn't break the whole request
-        }
-      })
-    );
+        } catch { /* non-fatal */ }
+      })(),
+    ]);
 
     const pois = Array.from(collected.values());
 

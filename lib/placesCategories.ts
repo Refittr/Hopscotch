@@ -29,6 +29,7 @@ export const VIBE_TYPES: Record<string, string[]> = {
   Culture: ["museum", "art_gallery", "library", "movie_theater", "performing_arts_theater"],
   Outdoors: ["park", "natural_feature", "campground", "zoo", "aquarium", "botanical_garden"],
   Family: ["amusement_park", "zoo", "aquarium", "tourist_attraction", "park"],
+  "LGBT+": ["lgbtq_venue"],
 };
 
 export function getCategoryLabel(types: string[]): string {
