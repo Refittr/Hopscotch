@@ -125,7 +125,7 @@ export default function MobileSidebar(props: Props) {
 
           <div className="flex-1 overflow-hidden" style={{ }}>
             {tab === "controls" ? (
-              <Sidebar {...props} hideHeader />
+              <Sidebar {...props} hideHeader onBrowse={() => setTab("browse")} />
             ) : (
               <BrowsePanel
                 pois={filteredPois}

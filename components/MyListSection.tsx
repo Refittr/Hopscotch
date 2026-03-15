@@ -120,9 +120,10 @@ interface Props {
   shortlist: POI[];
   onRemove: (placeId: string) => void;
   onReorder: (newList: POI[]) => void;
+  onAddSpots?: () => void;
 }
 
-export default function MyListSection({ shortlist, onRemove, onReorder }: Props) {
+export default function MyListSection({ shortlist, onRemove, onReorder, onAddSpots }: Props) {
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 4 } })
   );
@@ -137,17 +138,32 @@ export default function MyListSection({ shortlist, onRemove, onReorder }: Props)
 
   if (shortlist.length === 0) {
     return (
-      <p
-        className="text-xs py-4 text-center rounded-lg"
+      <button
+        onClick={onAddSpots}
+        className="w-full py-5 flex flex-col items-center gap-2 rounded-lg transition-all"
         style={{
-          color: "var(--muted)",
           background: "var(--input-bg)",
           border: "1px dashed var(--border)",
-          fontFamily: "var(--font-dm-sans)",
+          cursor: onAddSpots ? "pointer" : "default",
         }}
       >
-        Add spots to build your route
-      </p>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: "var(--border)" }}>
+          <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M11 8v6M8 11h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <span className="text-xs font-medium" style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
+          Add spots to build your route
+        </span>
+        {onAddSpots && (
+          <span
+            className="text-xs px-3 py-1 rounded-full font-semibold"
+            style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid rgba(0,240,255,0.2)", fontFamily: "var(--font-dm-sans)" }}
+          >
+            Browse spots →
+          </span>
+        )}
+      </button>
     );
   }
 

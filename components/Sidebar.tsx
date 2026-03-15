@@ -33,6 +33,7 @@ interface Props {
   onRemoveFromShortlist: (placeId: string) => void;
   onReorderShortlist: (newList: POI[]) => void;
   onStartRoute: () => void;
+  onBrowse?: () => void;
 }
 
 export default function Sidebar({
@@ -48,6 +49,7 @@ export default function Sidebar({
   onRemoveFromShortlist,
   onReorderShortlist,
   onStartRoute,
+  onBrowse,
 }: Props) {
   const prevCountRef = useRef(0);
   const [badgePulsing, setBadgePulsing] = useState(false);
@@ -184,6 +186,7 @@ export default function Sidebar({
             shortlist={shortlist}
             onRemove={onRemoveFromShortlist}
             onReorder={onReorderShortlist}
+            onAddSpots={onBrowse}
           />
         </div>
       </div>
