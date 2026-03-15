@@ -140,9 +140,15 @@ export default function MobileSidebar(props: Props) {
             </button>
           </div>
 
-          <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0 flex flex-col overflow-y-auto">
             {tab === "controls" ? (
-              <Sidebar {...props} hideHeader onBrowse={() => setTab("browse")} />
+              <>
+                <Sidebar {...props} hideHeader scrollable onBrowse={() => setTab("browse")} />
+                <div className="px-4 pt-2 pb-2 flex-shrink-0">
+                  <AdUnit slot="2261277039" format="horizontal" />
+                </div>
+                <div style={{ height: "24px", flexShrink: 0 }} />
+              </>
             ) : (
               <BrowsePanel
                 pois={filteredPois}
