@@ -49,7 +49,7 @@ export default function BrowsePanel({
       className="flex flex-col h-full"
       style={{
         width: "100%",
-        maxWidth: "320px",
+        maxWidth: "min(320px, 100%)",
         background: "var(--background)",
         borderRight: "1px solid var(--border)",
       }}

@@ -624,7 +624,7 @@ function HoppingView({
                 boxShadow: "0 0 20px rgba(255,45,120,0.35)",
               }}
             >
-              Go to {pendingOption.poi.name} →
+              Go to {pendingOption.poi.name} next →
             </button>
           )}
         </>
@@ -1049,7 +1049,7 @@ export default function RouteMode({
             onToast={onToast}
           />
         )}
-        <div style={{ height: "80px" }} />
+        <div style={{ height: "120px" }} />
       </div>
     </aside>
   );
