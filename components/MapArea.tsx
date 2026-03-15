@@ -130,7 +130,6 @@ export default function MapArea({
         gestureHandling="greedy"
         styles={DARK_MAP_STYLES}
         style={{ width: "100%", height: "100%", touchAction: "none" }}
-        onLoad={(map) => map.setOptions({ gestureHandling: "greedy" })}
       >
         <MapMarkers
           pois={pois}
