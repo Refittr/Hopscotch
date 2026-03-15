@@ -415,7 +415,7 @@ export default function Home() {
       visibleIds={visibleIds}
       shortlistIds={shortlistIds}
       highlightedPoiId={highlightedPoiId}
-      onMarkerClick={setHighlightedPoiId}
+      onMarkerClick={(id) => setHighlightedPoiId((prev) => (prev === id ? null : id))}
       onPoisLoaded={handlePoisLoaded}
       onLoadingChange={handleLoadingChange}
       routeState={routeState}
@@ -469,8 +469,27 @@ export default function Home() {
           <div style={{ height: "38vh", flexShrink: 0, position: "relative", overflow: "clip" }}>
             {mapArea}
           </div>
-          <div style={{ height: "62vh" }}>
-            <MobileSidebar {...sidebarProps} />
+          <div style={{ height: "62vh", overflowY: "auto" }}>
+            {routeState ? (
+              <RouteMode
+                routeState={routeState}
+                shortlist={shortlist}
+                browsePOIs={filteredPois}
+                onPickStart={handlePickStart}
+                onHopSelect={handleHopSelect}
+                onAddAISuggestion={handleAddAISuggestion}
+                onUndoLastHop={handleUndoLastHop}
+                onRemoveFromRoute={handleRemoveFromRoute}
+                onFinishRoute={handleFinishRoute}
+                onStartOver={handleStartOver}
+                onBackToPlanning={handleBackToPlanning}
+                onSpotHover={setHoveredHopOptionId}
+                onSuggestionHover={handleSuggestionHover}
+                onToast={pushToast}
+              />
+            ) : (
+              <MobileSidebar {...sidebarProps} />
+            )}
           </div>
         </div>
       )}

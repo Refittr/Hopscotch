@@ -169,7 +169,7 @@ export default function RouteMapLayer({ routeState, shortlist, hoveredHopOptionI
         const bounds = new google.maps.LatLngBounds();
         shortlist.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
         const narrow = map.getDiv().clientWidth < 600;
-        map.fitBounds(bounds, { top: 60, right: 40, bottom: narrow ? 220 : 80, left: narrow ? 20 : 460 });
+        map.fitBounds(bounds, { top: 60, right: 40, bottom: 40, left: narrow ? 20 : 460 });
       }
       return;
     }

@@ -919,8 +919,8 @@ export default function RouteMode({
     <aside
       className="flex flex-col h-full flex-shrink-0"
       style={{
-        width: "420px",
-        minWidth: "420px",
+        width: "100%",
+        maxWidth: "420px",
         background: "var(--sidebar-bg)",
         borderRight: "1px solid var(--border)",
       }}
