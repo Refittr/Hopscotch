@@ -429,7 +429,7 @@ export default function Home() {
     <APIProvider apiKey={apiKey} libraries={["places"]}>
       {isMobile === null ? null : !isMobile ? (
         /* ── Desktop layout ── */
-        <div className="flex h-screen" style={{ overflow: "hidden" }}>
+        <div className="flex h-screen" style={{ overflow: "clip" }}>
           {routeState ? (
             <RouteMode
               routeState={routeState}
@@ -465,8 +465,8 @@ export default function Home() {
         </div>
       ) : (
         /* ── Mobile layout ── */
-        <div className="flex flex-col h-screen" style={{ overflow: "hidden" }}>
-          <div style={{ height: "38vh", flexShrink: 0, position: "relative", touchAction: "none", overflow: "hidden" }}>
+        <div className="flex flex-col h-screen" style={{ overflow: "clip" }}>
+          <div style={{ height: "38vh", flexShrink: 0, position: "relative", touchAction: "none", overflow: "clip" }}>
             {mapArea}
           </div>
           <div style={{ height: "62vh" }}>
