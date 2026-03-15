@@ -139,12 +139,28 @@ export default function MapArea({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const prevent = (e: TouchEvent) => e.preventDefault();
-    el.addEventListener("touchstart", prevent, { passive: false });
-    el.addEventListener("touchmove", prevent, { passive: false });
+
+    const fire = (type: string, touch: Touch) => {
+      const target = document.elementFromPoint(touch.clientX, touch.clientY) ?? el;
+      target.dispatchEvent(new MouseEvent(type, {
+        bubbles: true, cancelable: true,
+        clientX: touch.clientX, clientY: touch.clientY,
+        screenX: touch.screenX, screenY: touch.screenY,
+        button: 0, buttons: type === "mouseup" ? 0 : 1,
+      }));
+    };
+
+    const onStart = (e: TouchEvent) => { e.preventDefault(); fire("mousedown", e.touches[0]); };
+    const onMove  = (e: TouchEvent) => { e.preventDefault(); fire("mousemove", e.touches[0]); };
+    const onEnd   = (e: TouchEvent) => { fire("mouseup", e.changedTouches[0]); };
+
+    el.addEventListener("touchstart", onStart, { passive: false });
+    el.addEventListener("touchmove",  onMove,  { passive: false });
+    el.addEventListener("touchend",   onEnd,   { passive: false });
     return () => {
-      el.removeEventListener("touchstart", prevent);
-      el.removeEventListener("touchmove", prevent);
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove",  onMove);
+      el.removeEventListener("touchend",   onEnd);
     };
   }, []);
 
