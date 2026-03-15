@@ -28,7 +28,7 @@ export default function MobileSidebar(props: Props) {
   const [tab, setTab] = useState<"controls" | "browse">("controls");
   const [showHelp, setShowHelp] = useState(false);
 
-  const { filteredPois, isLoading, highlightedPoiId, selectedCity, shortlistIds, onAddToShortlist } = props;
+  const { filteredPois, isLoading, highlightedPoiId, selectedCity, shortlistIds, onAddToShortlist, onStartRoute } = props;
 
   return (
     <>
@@ -107,28 +107,47 @@ export default function MobileSidebar(props: Props) {
         <div className="flex flex-col h-full" style={{ background: "var(--sidebar-bg)", borderTop: "1px solid var(--border)" }}>
           {/* Handle bar */}
           <button
-            className="flex items-center justify-between px-5 w-full flex-shrink-0"
-            style={{ touchAction: "manipulation", paddingTop: "14px", paddingBottom: "12px", borderBottom: "1px solid var(--border)" }}
+            className="flex items-center justify-between px-4 w-full flex-shrink-0"
+            style={{ touchAction: "manipulation", paddingTop: "12px", paddingBottom: "12px", borderBottom: "1px solid var(--border)" }}
             onClick={() => setExpanded(true)}
           >
-            <div className="flex items-center gap-3">
-              <span style={{ fontFamily: "var(--font-display)", fontSize: "20px", color: "var(--accent)", textShadow: "0 0 16px rgba(0,240,255,0.3)" }}>
+            <div className="flex items-center gap-3 min-w-0">
+              <span style={{ fontFamily: "var(--font-display)", fontSize: "20px", color: "var(--accent)", flexShrink: 0, textShadow: "0 0 16px rgba(0,240,255,0.3)" }}>
                 Hopscotch
               </span>
-              <span className="text-xs font-medium" style={{ color: "var(--muted)", letterSpacing: "0.2em", fontFamily: "var(--font-dm-sans)" }}>
-                CITY EXPLORER
-              </span>
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowHelp(true); }}
-                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                style={{ background: "var(--border)", color: "var(--muted)", fontFamily: "var(--font-dm-sans)", flexShrink: 0 }}
-              >
-                ?
-              </button>
+              {selectedCity ? (
+                <span className="text-xs font-medium truncate" style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}>
+                  {selectedCity.name}
+                  {!isLoading && filteredPois.length > 0 && (
+                    <span style={{ color: "var(--muted)" }}> · {filteredPois.length} spots</span>
+                  )}
+                  {isLoading && (
+                    <span style={{ color: "var(--muted)" }}> · loading…</span>
+                  )}
+                </span>
+              ) : (
+                <span className="text-xs font-medium" style={{ color: "var(--muted)", letterSpacing: "0.2em", fontFamily: "var(--font-dm-sans)" }}>
+                  CITY EXPLORER
+                </span>
+              )}
             </div>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "var(--border)" }}>
-              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" style={{ color: "var(--muted)" }}>
-                <path d="M2 8L6 4L10 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <div
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0"
+              style={{
+                background: selectedCity && !isLoading ? "var(--accent-dim)" : "var(--border)",
+                border: selectedCity && !isLoading ? "1px solid var(--accent)" : "1px solid transparent",
+                boxShadow: selectedCity && !isLoading ? "0 0 10px rgba(0,240,255,0.2)" : "none",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <span
+                className="text-xs font-semibold"
+                style={{ color: selectedCity && !isLoading ? "var(--accent)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
+              >
+                {selectedCity && !isLoading ? "Browse" : "Explore"}
+              </span>
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ color: selectedCity && !isLoading ? "var(--accent)" : "var(--muted)" }}>
+                <path d="M2 8L6 4L10 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
           </button>
