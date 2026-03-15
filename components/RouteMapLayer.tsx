@@ -168,7 +168,8 @@ export default function RouteMapLayer({ routeState, shortlist, hoveredHopOptionI
       if (shortlist.length > 0) {
         const bounds = new google.maps.LatLngBounds();
         shortlist.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
-        map.fitBounds(bounds, { top: 60, right: 60, bottom: 80, left: 460 });
+        const narrow = map.getDiv().clientWidth < 600;
+        map.fitBounds(bounds, { top: 60, right: 40, bottom: narrow ? 220 : 80, left: narrow ? 20 : 460 });
       }
       return;
     }
@@ -219,7 +220,8 @@ export default function RouteMapLayer({ routeState, shortlist, hoveredHopOptionI
         hopOptions.forEach((o) =>
           bounds.extend({ lat: o.poi.lat, lng: o.poi.lng })
         );
-        map.fitBounds(bounds, { top: 60, right: 40, bottom: 80, left: 440 });
+        const narrow = map.getDiv().clientWidth < 600;
+        map.fitBounds(bounds, { top: 60, right: 40, bottom: narrow ? 220 : 80, left: narrow ? 20 : 440 });
       }
     }
 

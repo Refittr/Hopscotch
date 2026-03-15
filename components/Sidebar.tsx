@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import CitySearch from "./CitySearch";
 import MyListSection from "./MyListSection";
+import HelpModal from "./HelpModal";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
 
@@ -47,6 +48,7 @@ export default function Sidebar({
 }: Props) {
   const prevCountRef = useRef(0);
   const [badgePulsing, setBadgePulsing] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     if (shortlist.length > prevCountRef.current) {
@@ -72,31 +74,48 @@ export default function Sidebar({
       {/* Brand Header */}
       {!hideHeader && (
         <div
-          className="px-5 pt-6 pb-5"
+          className="flex items-start justify-between px-5 pt-6 pb-5"
           style={{ borderBottom: "1px solid var(--border)" }}
         >
-          <h1
-            className="text-3xl leading-none"
+          <div>
+            <h1
+              className="text-3xl leading-none"
+              style={{
+                fontFamily: "var(--font-display)",
+                color: "var(--accent)",
+                textShadow: "0 0 24px rgba(0, 240, 255, 0.35)",
+              }}
+            >
+              Hopscotch
+            </h1>
+            <p
+              className="mt-1.5 text-xs font-medium"
+              style={{
+                color: "var(--muted)",
+                letterSpacing: "0.22em",
+                fontFamily: "var(--font-dm-sans)",
+              }}
+            >
+              CITY EXPLORER
+            </p>
+          </div>
+          <button
+            onClick={() => setShowHelp(true)}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mt-1"
             style={{
-              fontFamily: "var(--font-display)",
-              color: "var(--accent)",
-              textShadow: "0 0 24px rgba(0, 240, 255, 0.35)",
-            }}
-          >
-            Hopscotch
-          </h1>
-          <p
-            className="mt-1.5 text-xs font-medium"
-            style={{
+              background: "var(--border)",
               color: "var(--muted)",
-              letterSpacing: "0.22em",
               fontFamily: "var(--font-dm-sans)",
+              border: "1px solid var(--border)",
+              flexShrink: 0,
             }}
+            title="How to use Hopscotch"
           >
-            CITY EXPLORER
-          </p>
+            ?
+          </button>
         </div>
       )}
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
       {/* Search */}
       <div className="px-4 pt-4 pb-3">

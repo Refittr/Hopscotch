@@ -3,7 +3,8 @@
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -123,7 +124,10 @@ interface Props {
 }
 
 export default function MyListSection({ shortlist, onRemove, onReorder }: Props) {
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;

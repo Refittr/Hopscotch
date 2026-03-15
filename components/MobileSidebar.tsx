@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import BrowsePanel from "./BrowsePanel";
+import HelpModal from "./HelpModal";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
 
@@ -25,6 +26,7 @@ interface Props {
 export default function MobileSidebar(props: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<"controls" | "browse">("controls");
+  const [showHelp, setShowHelp] = useState(false);
 
   const {
     filteredPois,
@@ -37,6 +39,7 @@ export default function MobileSidebar(props: Props) {
 
   return (
     <div className="md:hidden fixed inset-x-0 bottom-0 z-50" style={{ pointerEvents: "none" }}>
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {expanded && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm"
@@ -78,6 +81,18 @@ export default function MobileSidebar(props: Props) {
             >
               CITY EXPLORER
             </span>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowHelp(true); }}
+              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+              style={{
+                background: "var(--border)",
+                color: "var(--muted)",
+                fontFamily: "var(--font-dm-sans)",
+                flexShrink: 0,
+              }}
+            >
+              ?
+            </button>
           </div>
           <div
             className="w-9 h-9 rounded-full flex items-center justify-center"
