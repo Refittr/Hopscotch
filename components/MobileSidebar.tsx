@@ -51,21 +51,21 @@ export default function MobileSidebar(props: Props) {
           background: "var(--sidebar-bg)",
           border: "1px solid var(--border)",
           borderBottom: "none",
-          height: expanded ? "85vh" : "64px",
+          height: expanded ? "92vh" : "50vh",
           pointerEvents: "auto",
         }}
       >
         {/* Handle bar */}
         <button
-          className="flex items-center justify-between px-5 py-4 w-full flex-shrink-0"
-          style={{ touchAction: "manipulation" }}
+          className="flex items-center justify-between px-5 w-full flex-shrink-0"
+          style={{ touchAction: "manipulation", paddingTop: "18px", paddingBottom: "16px" }}
           onClick={() => setExpanded((v) => !v)}
         >
           <div className="flex items-center gap-3">
             <span
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: "20px",
+                fontSize: "22px",
                 color: "var(--accent)",
                 textShadow: "0 0 16px rgba(0,240,255,0.3)",
               }}
@@ -80,18 +80,25 @@ export default function MobileSidebar(props: Props) {
             </span>
           </div>
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center"
+            className="w-9 h-9 rounded-full flex items-center justify-center"
             style={{
               background: "var(--border)",
               transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
               transition: "transform 0.2s ease",
             }}
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--muted)" }}>
+            <svg width="13" height="13" viewBox="0 0 12 12" fill="none" style={{ color: "var(--muted)" }}>
               <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         </button>
+
+        {/* Always-visible content when collapsed */}
+        {!expanded && (
+          <div className="flex-1 overflow-hidden px-4 pb-4">
+            <Sidebar {...props} hideHeader />
+          </div>
+        )}
 
         {expanded && (
           <>
