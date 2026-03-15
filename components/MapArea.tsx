@@ -92,6 +92,13 @@ function GestureEnabler() {
     if (!map) return;
     map.setOptions({ gestureHandling: "greedy", draggable: true });
     google.maps.event.trigger(map, "resize");
+    // Re-trigger after layout settles (Android Chrome sometimes initializes touch
+    // handlers before the 50vh container has its final dimensions)
+    const t = setTimeout(() => {
+      map.setOptions({ gestureHandling: "greedy", draggable: true });
+      google.maps.event.trigger(map, "resize");
+    }, 300);
+    return () => clearTimeout(t);
   }, [map]);
   return null;
 }
@@ -127,7 +134,7 @@ export default function MapArea({
 }: Props) {
   const inRouteMode = routeState !== null;
   return (
-    <div className="absolute inset-0 md:relative md:flex-1" style={{ minHeight: 0 }}>
+    <div className="absolute inset-0 md:relative md:flex-1" style={{ minHeight: 0, touchAction: "none" }}>
       <POIFetcher
         selectedCity={selectedCity}
         onPoisLoaded={onPoisLoaded}
@@ -140,7 +147,7 @@ export default function MapArea({
         disableDefaultUI
         gestureHandling="greedy"
         styles={DARK_MAP_STYLES}
-        style={{ width: "100%", height: "100%" }}
+        style={{ width: "100%", height: "100%", touchAction: "none" }}
       >
         <GestureEnabler />
         <MapMarkers
