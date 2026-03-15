@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     const collected = new Map<string, {
       placeId: string; name: string; lat: number; lng: number;
       rating?: number; ratingsCount?: number;
-      types: string[]; category: string; photoRef?: string; isOpen?: boolean;
+      types: string[]; category: string; photoRef?: string; isOpen?: boolean; vicinity?: string;
     }>();
 
     await Promise.all(
@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
               category:     getCategoryLabel(types),
               photoRef:     place.photos?.[0]?.photo_reference,
               isOpen:       place.opening_hours?.open_now,
+              vicinity:     place.vicinity,
             });
           }
         } catch {
@@ -151,6 +152,7 @@ export async function POST(req: NextRequest) {
       category:     p.category,
       photoUrl:     p.photoRef ? photoUrl(p.photoRef) : undefined,
       isOpen:       p.isOpen,
+      vicinity:     p.vicinity,
     }));
 
     return NextResponse.json(result);
@@ -170,4 +172,5 @@ interface GooglePlace {
   types?: string[];
   photos?: Array<{ photo_reference: string }>;
   opening_hours?: { open_now?: boolean };
+  vicinity?: string;
 }

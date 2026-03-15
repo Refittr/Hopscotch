@@ -57,6 +57,11 @@ function InfoTooltip({ poi }: { poi: POI }) {
             <p className="text-xs mt-0.5" style={{ color: "var(--accent)", fontFamily: "var(--font-dm-sans)", letterSpacing: "0.1em", textTransform: "uppercase", fontSize: "9px" }}>
               {poi.category}
             </p>
+            {poi.vicinity && (
+              <p className="text-xs mt-1" style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)", fontSize: "10px" }}>
+                📍 {poi.vicinity}
+              </p>
+            )}
           </div>
 
           <div className="px-3 py-2.5 flex flex-col gap-2">

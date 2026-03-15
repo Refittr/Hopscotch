@@ -947,15 +947,6 @@ export default function RouteMode({
           Back to planning
         </button>
         <div className="flex items-center gap-2">
-          {(routeState.phase === "hopping" || routeState.phase === "complete") &&
-            routeState.completedHops.length > 0 && (
-              <ShareButtons
-                hops={routeState.completedHops}
-                cityName={routeState.cityName}
-                onToast={onToast}
-                compact
-              />
-            )}
           {cityName && (
             <span
               className="text-xs px-2 py-0.5 rounded-full"

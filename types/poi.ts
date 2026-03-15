@@ -9,4 +9,5 @@ export interface POI {
   category: string;
   photoUrl?: string;
   isOpen?: boolean;
+  vicinity?: string;
 }
