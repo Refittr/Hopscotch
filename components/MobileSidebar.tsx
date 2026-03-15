@@ -38,7 +38,7 @@ export default function MobileSidebar(props: Props) {
   } = props;
 
   return (
-    <div className="md:hidden fixed inset-x-0 bottom-0 z-50" style={{ pointerEvents: "none" }}>
+    <div className="md:hidden absolute inset-x-0 bottom-0 z-50" style={{ pointerEvents: "none" }}>
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {expanded && (
         <div

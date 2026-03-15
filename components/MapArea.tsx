@@ -126,7 +126,7 @@ export default function MapArea({
 }: Props) {
   const inRouteMode = routeState !== null;
   return (
-    <div className="flex-1 relative" style={{ overflow: "clip" }}>
+    <div className="absolute inset-0 md:relative md:flex-1" style={{ overflow: "clip" }}>
       <POIFetcher
         selectedCity={selectedCity}
         onPoisLoaded={onPoisLoaded}
@@ -139,7 +139,7 @@ export default function MapArea({
         disableDefaultUI
         gestureHandling="greedy"
         styles={DARK_MAP_STYLES}
-        style={{ width: "100%", height: "100%", touchAction: "none" }}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, touchAction: "none" }}
       >
         <GestureEnabler />
         <MapMarkers

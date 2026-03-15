@@ -438,24 +438,24 @@ export default function Home() {
           )}
         </div>
 
-        {/* Map */}
-        <MapArea
-          selectedCity={selectedCity}
-          pois={pois}
-          visibleIds={visibleIds}
-          shortlistIds={shortlistIds}
-          highlightedPoiId={highlightedPoiId}
-          onMarkerClick={setHighlightedPoiId}
-          onPoisLoaded={handlePoisLoaded}
-          onLoadingChange={handleLoadingChange}
-          routeState={routeState}
-          shortlist={shortlist}
-          hoveredHopOptionId={hoveredHopOptionId}
-          suggestionPreviewPos={suggestionPreviewPos}
-        />
-
-        {/* Mobile */}
-        <MobileSidebar {...sidebarProps} />
+        {/* Map + mobile sidebar — wrapped so sidebar is absolute not fixed */}
+        <div className="flex-1 relative md:contents">
+          <MapArea
+            selectedCity={selectedCity}
+            pois={pois}
+            visibleIds={visibleIds}
+            shortlistIds={shortlistIds}
+            highlightedPoiId={highlightedPoiId}
+            onMarkerClick={setHighlightedPoiId}
+            onPoisLoaded={handlePoisLoaded}
+            onLoadingChange={handleLoadingChange}
+            routeState={routeState}
+            shortlist={shortlist}
+            hoveredHopOptionId={hoveredHopOptionId}
+            suggestionPreviewPos={suggestionPreviewPos}
+          />
+          <MobileSidebar {...sidebarProps} />
+        </div>
       </div>
 
       <Toast
