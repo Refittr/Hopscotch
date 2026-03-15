@@ -147,7 +147,7 @@ export default function MapArea({
         disableDefaultUI
         gestureHandling="greedy"
         styles={DARK_MAP_STYLES}
-        style={{ width: "100%", height: "100%", touchAction: "none" }}
+        style={{ width: "100%", height: "100%" }}
       >
         <GestureEnabler />
         <MapMarkers
