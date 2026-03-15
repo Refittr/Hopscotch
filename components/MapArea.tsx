@@ -91,6 +91,7 @@ function GestureEnabler() {
   useEffect(() => {
     if (!map) return;
     map.setOptions({ gestureHandling: "greedy", draggable: true });
+    google.maps.event.trigger(map, "resize");
   }, [map]);
   return null;
 }
@@ -126,7 +127,7 @@ export default function MapArea({
 }: Props) {
   const inRouteMode = routeState !== null;
   return (
-    <div className="absolute inset-0 md:relative md:flex-1" style={{ overflow: "clip" }}>
+    <div className="absolute inset-0 md:relative md:flex-1">
       <POIFetcher
         selectedCity={selectedCity}
         onPoisLoaded={onPoisLoaded}
@@ -139,7 +140,7 @@ export default function MapArea({
         disableDefaultUI
         gestureHandling="greedy"
         styles={DARK_MAP_STYLES}
-        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, touchAction: "none" }}
+        style={{ width: "100%", height: "100%" }}
       >
         <GestureEnabler />
         <MapMarkers
