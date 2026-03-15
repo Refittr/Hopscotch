@@ -153,7 +153,7 @@ export default function MobileSidebar(props: Props) {
           </button>
 
           {/* Scrollable content */}
-          <div className="px-4" style={{ overflowY: "auto", height: "calc(62vh - 56px)", paddingBottom: "96px", }}>
+          <div className="flex-1 overflow-y-auto px-4 min-h-0" style={{ paddingBottom: "32px" }}>
             <Sidebar {...props} hideHeader scrollable />
           </div>
         </div>
