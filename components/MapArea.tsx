@@ -133,20 +133,38 @@ export default function MapArea({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    let lastX = 0, lastY = 0;
+    let lastX = 0, lastY = 0, lastDist = 0;
+
+    const dist = (a: Touch, b: Touch) =>
+      Math.sqrt((a.clientX - b.clientX) ** 2 + (a.clientY - b.clientY) ** 2);
+
     const onStart = (e: TouchEvent) => {
       e.preventDefault();
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
+      if (e.touches.length === 2) {
+        lastDist = dist(e.touches[0], e.touches[1]);
+      } else {
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+      }
     };
     const onMove = (e: TouchEvent) => {
       e.preventDefault();
-      if (!e.touches.length || !mapRef.current) return;
-      const dx = lastX - e.touches[0].clientX;
-      const dy = lastY - e.touches[0].clientY;
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
-      mapRef.current.panBy(dx, dy);
+      if (!mapRef.current) return;
+      if (e.touches.length === 2) {
+        const d = dist(e.touches[0], e.touches[1]);
+        if (lastDist > 0) {
+          const zoom = mapRef.current.getZoom() ?? 12;
+          mapRef.current.setZoom(zoom + Math.log2(d / lastDist));
+        }
+        lastDist = d;
+      } else if (e.touches.length === 1) {
+        lastDist = 0;
+        const dx = lastX - e.touches[0].clientX;
+        const dy = lastY - e.touches[0].clientY;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+        mapRef.current.panBy(dx, dy);
+      }
     };
     el.addEventListener("touchstart", onStart, { passive: false });
     el.addEventListener("touchmove", onMove, { passive: false });
