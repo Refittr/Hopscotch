@@ -118,6 +118,10 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
         style={{
           background: "var(--input-bg)",
           border: `1px solid ${focused ? "var(--accent)" : "var(--border)"}`,
+          boxShadow: focused
+            ? "0 0 0 3px rgba(0, 240, 255, 0.1), 0 0 16px rgba(0, 240, 255, 0.07)"
+            : "none",
+          transition: "border-color 0.18s ease, box-shadow 0.18s ease",
         }}
       >
         <svg

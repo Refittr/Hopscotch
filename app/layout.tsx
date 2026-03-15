@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, DM_Sans } from "next/font/google";
+import { Pacifico, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
+const pacifico = Pacifico({
+  variable: "--font-display",
   subsets: ["latin"],
   weight: "400",
-  style: ["normal", "italic"],
 });
 
 const dmSans = DM_Sans({
@@ -16,7 +15,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Hopscotch — City Explorer",
+  title: "Hopscotch - City Explorer",
   description: "Explore cities, discover spots, build your route.",
 };
 
@@ -27,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${instrumentSerif.variable} ${dmSans.variable}`}>
+      <body className={`${pacifico.variable} ${dmSans.variable}`}>
         {children}
       </body>
     </html>

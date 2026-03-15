@@ -8,11 +8,16 @@ interface Props {
   isLoading: boolean;
   highlightedPoiId: string | null;
   hasCity: boolean;
+  shortlistIds: Set<string>;
+  onAddToShortlist: (poi: POI) => void;
 }
 
 function SkeletonCard() {
   return (
-    <div className="flex items-center gap-3 p-2.5 rounded-lg" style={{ background: "var(--input-bg)", border: "1px solid var(--border)" }}>
+    <div
+      className="flex items-center gap-3 p-2.5 rounded-lg"
+      style={{ background: "var(--input-bg)", border: "1px solid var(--border)" }}
+    >
       <div className="skeleton w-12 h-12 rounded-md flex-shrink-0" />
       <div className="flex-1 flex flex-col gap-1.5">
         <div className="skeleton h-3 rounded w-3/4" />
@@ -23,7 +28,14 @@ function SkeletonCard() {
   );
 }
 
-export default function BrowseSection({ pois, isLoading, highlightedPoiId, hasCity }: Props) {
+export default function BrowseSection({
+  pois,
+  isLoading,
+  highlightedPoiId,
+  hasCity,
+  shortlistIds,
+  onAddToShortlist,
+}: Props) {
   return (
     <div className="flex-1 overflow-y-auto px-5 pt-5 pb-3 min-h-0">
       {/* Header */}
@@ -52,7 +64,6 @@ export default function BrowseSection({ pois, isLoading, highlightedPoiId, hasCi
         )}
       </div>
 
-      {/* Loading skeletons */}
       {isLoading && (
         <div className="flex flex-col gap-2">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -61,7 +72,6 @@ export default function BrowseSection({ pois, isLoading, highlightedPoiId, hasCi
         </div>
       )}
 
-      {/* Empty state — no city selected */}
       {!isLoading && !hasCity && (
         <p
           className="text-xs text-center py-6"
@@ -71,7 +81,6 @@ export default function BrowseSection({ pois, isLoading, highlightedPoiId, hasCi
         </p>
       )}
 
-      {/* Empty state — city selected but no results */}
       {!isLoading && hasCity && pois.length === 0 && (
         <p
           className="text-xs text-center py-6"
@@ -81,7 +90,6 @@ export default function BrowseSection({ pois, isLoading, highlightedPoiId, hasCi
         </p>
       )}
 
-      {/* POI cards */}
       {!isLoading && pois.length > 0 && (
         <div className="flex flex-col gap-2">
           {pois.map((poi) => (
@@ -89,6 +97,8 @@ export default function BrowseSection({ pois, isLoading, highlightedPoiId, hasCi
               key={poi.placeId}
               poi={poi}
               highlighted={poi.placeId === highlightedPoiId}
+              isShortlisted={shortlistIds.has(poi.placeId)}
+              onAdd={onAddToShortlist}
             />
           ))}
         </div>

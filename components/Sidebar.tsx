@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import CitySearch from "./CitySearch";
-import BrowseSection from "./BrowseSection";
+import MyListSection from "./MyListSection";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
 
@@ -23,24 +24,48 @@ interface Props {
   activeVibes: Set<string>;
   onVibeToggle: (label: string) => void;
   highlightedPoiId: string | null;
+  shortlist: POI[];
+  shortlistIds: Set<string>;
+  onAddToShortlist: (poi: POI) => void;
+  onRemoveFromShortlist: (placeId: string) => void;
+  onReorderShortlist: (newList: POI[]) => void;
+  onStartRoute: () => void;
 }
 
 export default function Sidebar({
   hideHeader,
   selectedCity,
   onCitySelect,
-  filteredPois,
-  isLoading,
   activeVibes,
   onVibeToggle,
-  highlightedPoiId,
+  shortlist,
+  shortlistIds,
+  onAddToShortlist,
+  onRemoveFromShortlist,
+  onReorderShortlist,
+  onStartRoute,
 }: Props) {
+  const prevCountRef = useRef(0);
+  const [badgePulsing, setBadgePulsing] = useState(false);
+
+  useEffect(() => {
+    if (shortlist.length > prevCountRef.current) {
+      setBadgePulsing(true);
+      const t = setTimeout(() => setBadgePulsing(false), 500);
+      prevCountRef.current = shortlist.length;
+      return () => clearTimeout(t);
+    }
+    prevCountRef.current = shortlist.length;
+  }, [shortlist.length]);
+
+  const canStartRoute = shortlist.length >= 2;
+
   return (
     <aside
-      className="sidebar flex flex-col h-full"
+      className="flex flex-col h-full flex-shrink-0"
       style={{
-        width: hideHeader ? "100%" : "400px",
-        minWidth: hideHeader ? undefined : "400px",
+        width: hideHeader ? "100%" : "280px",
+        minWidth: hideHeader ? undefined : "280px",
         background: "var(--sidebar-bg)",
         borderRight: hideHeader ? "none" : "1px solid var(--border)",
       }}
@@ -48,16 +73,15 @@ export default function Sidebar({
       {/* Brand Header */}
       {!hideHeader && (
         <div
-          className="px-6 pt-7 pb-5"
+          className="px-5 pt-6 pb-5"
           style={{ borderBottom: "1px solid var(--border)" }}
         >
           <h1
-            className="text-4xl leading-none"
+            className="text-3xl leading-none"
             style={{
-              fontFamily: "var(--font-instrument-serif)",
-              fontStyle: "italic",
-              color: "var(--foreground)",
-              letterSpacing: "-0.01em",
+              fontFamily: "var(--font-display)",
+              color: "var(--accent)",
+              textShadow: "0 0 24px rgba(0, 240, 255, 0.35)",
             }}
           >
             Hopscotch
@@ -65,8 +89,8 @@ export default function Sidebar({
           <p
             className="mt-1.5 text-xs font-medium"
             style={{
-              color: "var(--accent)",
-              letterSpacing: "0.18em",
+              color: "var(--muted)",
+              letterSpacing: "0.22em",
               fontFamily: "var(--font-dm-sans)",
             }}
           >
@@ -76,31 +100,32 @@ export default function Sidebar({
       )}
 
       {/* Search */}
-      <div className="px-5 pt-5 pb-4">
+      <div className="px-4 pt-4 pb-3">
         <CitySearch selectedCity={selectedCity} onCitySelect={onCitySelect} />
       </div>
 
       {/* Vibe Filter Chips */}
-      <div className="px-5 pb-5">
-        <div className="flex flex-wrap gap-2">
+      <div className="px-4 pb-4">
+        <div className="flex flex-wrap gap-1.5">
           {VIBES.map(({ label, emoji }) => {
             const isActive = activeVibes.has(label);
             return (
               <button
                 key={label}
                 onClick={() => onVibeToggle(label)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer"
                 style={{
                   background: isActive ? "var(--chip-active-bg)" : "var(--chip-bg)",
-                  border: isActive
-                    ? "1px solid var(--accent)"
-                    : "1px solid var(--border)",
+                  border: isActive ? "1px solid var(--accent)" : "1px solid var(--border)",
                   color: isActive ? "var(--accent)" : "var(--muted)",
                   fontFamily: "var(--font-dm-sans)",
-                  letterSpacing: "0.01em",
+                  boxShadow: isActive
+                    ? "0 0 0 2px rgba(0,240,255,0.1), 0 0 8px rgba(0,240,255,0.07)"
+                    : "none",
+                  transition: "all 0.15s ease",
                 }}
               >
-                <span>{emoji}</span>
+                <span style={{ fontSize: "11px" }}>{emoji}</span>
                 <span>{label}</span>
               </button>
             );
@@ -109,11 +134,11 @@ export default function Sidebar({
       </div>
 
       {/* Divider */}
-      <div style={{ height: "1px", background: "var(--border)", margin: "0 20px" }} />
+      <div style={{ height: "1px", background: "var(--border)", margin: "0 16px" }} />
 
-      {/* My List Section */}
-      <div className="px-5 pt-5 pb-4">
-        <div className="flex items-center gap-2 mb-3">
+      {/* My List — scrollable, takes remaining space */}
+      <div className="flex flex-col flex-1 min-h-0 px-4 pt-4 pb-3">
+        <div className="flex items-center gap-2 mb-3 flex-shrink-0">
           <span
             className="text-sm font-medium"
             style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}
@@ -121,56 +146,54 @@ export default function Sidebar({
             My List
           </span>
           <span
-            className="flex items-center justify-center w-5 h-5 rounded-full text-xs font-semibold"
+            className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-semibold"
             style={{
-              background: "var(--border)",
-              color: "var(--muted)",
+              background: shortlist.length > 0 ? "var(--accent-secondary)" : "var(--border)",
+              color: shortlist.length > 0 ? "#fff" : "var(--muted)",
               fontFamily: "var(--font-dm-sans)",
+              animation: badgePulsing ? "badge-pulse 0.45s ease" : "none",
+              boxShadow: shortlist.length > 0 ? "0 0 8px rgba(255,45,120,0.4)" : "none",
             }}
           >
-            0
+            {shortlist.length}
           </span>
         </div>
-        <p
-          className="text-xs py-4 text-center rounded-lg"
-          style={{
-            color: "var(--muted)",
-            background: "var(--input-bg)",
-            border: "1px dashed var(--border)",
-            fontFamily: "var(--font-dm-sans)",
-          }}
-        >
-          Add spots to build your route
-        </p>
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <MyListSection
+            shortlist={shortlist}
+            onRemove={onRemoveFromShortlist}
+            onReorder={onReorderShortlist}
+          />
+        </div>
       </div>
-
-      {/* Divider */}
-      <div style={{ height: "1px", background: "var(--border)", margin: "0 20px" }} />
-
-      {/* Browse — scrollable, fills remaining space */}
-      <BrowseSection
-        pois={filteredPois}
-        isLoading={isLoading}
-        highlightedPoiId={highlightedPoiId}
-        hasCity={selectedCity != null}
-      />
 
       {/* Footer */}
       <div
-        className="px-5 py-4"
+        className="px-4 py-4 flex-shrink-0"
         style={{ borderTop: "1px solid var(--border)" }}
       >
         <button
-          disabled
-          className="w-full py-3.5 rounded-xl text-sm font-semibold cursor-not-allowed"
+          disabled={!canStartRoute}
+          onClick={canStartRoute ? onStartRoute : undefined}
+          className="w-full py-3 rounded-xl text-sm font-semibold transition-all"
           style={{
-            background: "var(--border)",
-            color: "var(--muted)",
+            background: canStartRoute ? "var(--accent)" : "var(--border)",
+            color: canStartRoute ? "#0a0a0a" : "var(--muted)",
             fontFamily: "var(--font-dm-sans)",
-            letterSpacing: "0.04em",
+            letterSpacing: "0.06em",
+            cursor: canStartRoute ? "pointer" : "not-allowed",
+            boxShadow: canStartRoute
+              ? "0 0 20px rgba(0,240,255,0.25), 0 0 40px rgba(0,240,255,0.1)"
+              : "none",
+            transition: "all 0.2s ease",
           }}
         >
           Start Route
+          {shortlist.length >= 2 && (
+            <span className="ml-2 opacity-60 text-xs">
+              ({shortlist.length} stops)
+            </span>
+          )}
         </button>
       </div>
     </aside>

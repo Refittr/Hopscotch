@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Sidebar from "./Sidebar";
+import BrowsePanel from "./BrowsePanel";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
 
@@ -13,10 +14,26 @@ interface Props {
   activeVibes: Set<string>;
   onVibeToggle: (label: string) => void;
   highlightedPoiId: string | null;
+  shortlist: POI[];
+  shortlistIds: Set<string>;
+  onAddToShortlist: (poi: POI) => void;
+  onRemoveFromShortlist: (placeId: string) => void;
+  onReorderShortlist: (newList: POI[]) => void;
+  onStartRoute: () => void;
 }
 
 export default function MobileSidebar(props: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [tab, setTab] = useState<"controls" | "browse">("controls");
+
+  const {
+    filteredPois,
+    isLoading,
+    highlightedPoiId,
+    selectedCity,
+    shortlistIds,
+    onAddToShortlist,
+  } = props;
 
   return (
     <div className="md:hidden fixed inset-x-0 bottom-0 z-50">
@@ -33,7 +50,7 @@ export default function MobileSidebar(props: Props) {
           background: "var(--sidebar-bg)",
           border: "1px solid var(--border)",
           borderBottom: "none",
-          height: expanded ? "85vh" : "72px",
+          height: expanded ? "85vh" : "64px",
         }}
       >
         {/* Handle bar */}
@@ -43,22 +60,18 @@ export default function MobileSidebar(props: Props) {
         >
           <div className="flex items-center gap-3">
             <span
-              className="text-xl"
               style={{
-                fontFamily: "var(--font-instrument-serif)",
-                fontStyle: "italic",
-                color: "var(--foreground)",
+                fontFamily: "var(--font-display)",
+                fontSize: "20px",
+                color: "var(--accent)",
+                textShadow: "0 0 16px rgba(0,240,255,0.3)",
               }}
             >
               Hopscotch
             </span>
             <span
               className="text-xs font-medium"
-              style={{
-                color: "var(--accent)",
-                letterSpacing: "0.15em",
-                fontFamily: "var(--font-dm-sans)",
-              }}
+              style={{ color: "var(--muted)", letterSpacing: "0.2em", fontFamily: "var(--font-dm-sans)" }}
             >
               CITY EXPLORER
             </span>
@@ -78,9 +91,44 @@ export default function MobileSidebar(props: Props) {
         </button>
 
         {expanded && (
-          <div className="flex-1 overflow-hidden">
-            <Sidebar {...props} hideHeader />
-          </div>
+          <>
+            {/* Tab switcher */}
+            <div
+              className="flex flex-shrink-0 mx-4 mb-3 rounded-lg overflow-hidden"
+              style={{ background: "var(--input-bg)", border: "1px solid var(--border)" }}
+            >
+              {(["controls", "browse"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className="flex-1 py-2 text-xs font-medium capitalize transition-all"
+                  style={{
+                    background: tab === t ? "var(--accent-dim)" : "transparent",
+                    color: tab === t ? "var(--accent)" : "var(--muted)",
+                    borderBottom: tab === t ? "1px solid var(--accent)" : "1px solid transparent",
+                    fontFamily: "var(--font-dm-sans)",
+                  }}
+                >
+                  {t === "controls" ? "My List" : "Browse"}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1 overflow-hidden">
+              {tab === "controls" ? (
+                <Sidebar {...props} hideHeader />
+              ) : (
+                <BrowsePanel
+                  pois={filteredPois}
+                  isLoading={isLoading}
+                  highlightedPoiId={highlightedPoiId}
+                  hasCity={selectedCity != null}
+                  shortlistIds={shortlistIds}
+                  onAddToShortlist={onAddToShortlist}
+                />
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

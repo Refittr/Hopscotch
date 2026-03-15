@@ -7,13 +7,14 @@ import { getCategoryEmoji } from "@/lib/placesCategories";
 interface Props {
   poi: POI;
   highlighted: boolean;
+  isShortlisted: boolean;
+  onAdd: (poi: POI) => void;
 }
 
-export default function POICard({ poi, highlighted }: Props) {
+export default function POICard({ poi, highlighted, isShortlisted, onAdd }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [imgError, setImgError] = useState(false);
 
-  // Scroll into view + flash on highlight
   useEffect(() => {
     if (highlighted && ref.current) {
       ref.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -23,7 +24,7 @@ export default function POICard({ poi, highlighted }: Props) {
   return (
     <div
       ref={ref}
-      className="poi-card flex items-center gap-3 p-2.5 rounded-lg transition-all cursor-pointer group"
+      className="poi-card flex items-center gap-3 p-2.5 rounded-lg cursor-pointer"
       style={{
         background: highlighted ? "var(--accent-dim)" : "var(--input-bg)",
         border: `1px solid ${highlighted ? "var(--accent)" : "var(--border)"}`,
@@ -32,8 +33,8 @@ export default function POICard({ poi, highlighted }: Props) {
     >
       {/* Thumbnail */}
       <div
-        className="w-12 h-12 rounded-md flex-shrink-0 overflow-hidden flex items-center justify-center text-xl"
-        style={{ background: "var(--border)" }}
+        className="w-12 h-12 rounded-md flex-shrink-0 overflow-hidden flex items-center justify-center"
+        style={{ background: "var(--border)", fontSize: "20px" }}
       >
         {poi.photoUrl && !imgError ? (
           <img
@@ -43,7 +44,7 @@ export default function POICard({ poi, highlighted }: Props) {
             onError={() => setImgError(true)}
           />
         ) : (
-          <span style={{ fontSize: "20px" }}>{getCategoryEmoji(poi.category)}</span>
+          <span>{getCategoryEmoji(poi.category)}</span>
         )}
       </div>
 
@@ -77,8 +78,7 @@ export default function POICard({ poi, highlighted }: Props) {
               {poi.rating.toFixed(1)}
               {poi.ratingsCount != null && (
                 <span style={{ color: "var(--border)" }}>
-                  {" "}
-                  ({poi.ratingsCount.toLocaleString()})
+                  {" "}({poi.ratingsCount.toLocaleString()})
                 </span>
               )}
             </span>
@@ -86,25 +86,38 @@ export default function POICard({ poi, highlighted }: Props) {
         )}
       </div>
 
-      {/* Add to list button — shown on hover */}
+      {/* Add / shortlisted button */}
       <button
-        className="add-btn w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-opacity"
+        className="add-btn w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
         style={{
-          background: "var(--accent-dim)",
-          border: "1px solid var(--accent)",
-          color: "var(--accent)",
+          background: isShortlisted ? "var(--accent-secondary)" : "var(--accent-dim)",
+          border: `1px solid ${isShortlisted ? "var(--accent-secondary)" : "var(--accent)"}`,
+          color: isShortlisted ? "#fff" : "var(--accent)",
+          opacity: isShortlisted ? 1 : undefined,
+          cursor: isShortlisted ? "default" : "pointer",
+          boxShadow: isShortlisted ? "0 0 8px rgba(255, 45, 120, 0.35)" : "none",
         }}
-        onClick={(e) => e.stopPropagation()}
-        aria-label={`Add ${poi.name} to list`}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!isShortlisted) onAdd(poi);
+        }}
+        aria-label={isShortlisted ? "Already in list" : `Add ${poi.name} to list`}
       >
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path
-            d="M5 1V9M1 5H9"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
+        {isShortlisted ? (
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path
+              d="M1 4L3.5 6.5L9 1"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ) : (
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M5 1V9M1 5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        )}
       </button>
     </div>
   );

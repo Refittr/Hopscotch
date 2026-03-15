@@ -6,6 +6,8 @@ import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
 import POIFetcher from "./POIFetcher";
 import MapMarkers from "./MapMarkers";
+import RouteMapLayer from "./RouteMapLayer";
+import type { RouteState } from "@/types/route";
 
 const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
   { elementType: "geometry", stylers: [{ color: "#1a1714" }] },
@@ -112,21 +114,30 @@ interface Props {
   selectedCity: SelectedCity | null;
   pois: POI[];
   visibleIds: Set<string>;
+  shortlistIds: Set<string>;
   highlightedPoiId: string | null;
   onMarkerClick: (placeId: string) => void;
   onPoisLoaded: (pois: POI[]) => void;
   onLoadingChange: (loading: boolean) => void;
+  routeState: RouteState | null;
+  shortlist: POI[];
+  hoveredHopOptionId: string | null;
 }
 
 export default function MapArea({
   selectedCity,
   pois,
   visibleIds,
+  shortlistIds,
   highlightedPoiId,
   onMarkerClick,
   onPoisLoaded,
   onLoadingChange,
+  routeState,
+  shortlist,
+  hoveredHopOptionId,
 }: Props) {
+  const inRouteMode = routeState !== null;
   return (
     <div className="flex-1 relative overflow-hidden">
       <Map
@@ -146,9 +157,12 @@ export default function MapArea({
         <MapMarkers
           pois={pois}
           visibleIds={visibleIds}
+          shortlistIds={shortlistIds}
           highlightedId={highlightedPoiId}
           onMarkerClick={onMarkerClick}
+          hideAll={inRouteMode}
         />
+        <RouteMapLayer routeState={routeState} shortlist={shortlist} hoveredHopOptionId={hoveredHopOptionId} />
       </Map>
 
       {/* Overlay when no city selected */}

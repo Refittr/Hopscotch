@@ -7,35 +7,60 @@ import type { POI } from "@/types/poi";
 interface Props {
   pois: POI[];
   visibleIds: Set<string>;
+  shortlistIds: Set<string>;
   highlightedId: string | null;
   onMarkerClick: (placeId: string) => void;
+  hideAll?: boolean;
 }
 
-function makeIcon(highlighted: boolean): google.maps.Symbol {
+function browseIcon(highlighted: boolean): google.maps.Symbol {
   return {
     path: google.maps.SymbolPath.CIRCLE,
     scale: highlighted ? 9 : 6,
-    fillColor: "#E8A44A",
-    fillOpacity: highlighted ? 1 : 0.75,
-    strokeColor: highlighted ? "#ffffff" : "rgba(232,164,74,0.35)",
+    fillColor: "#00F0FF",
+    fillOpacity: highlighted ? 0.95 : 0.6,
+    strokeColor: highlighted ? "#ffffff" : "rgba(0,240,255,0.3)",
     strokeWeight: highlighted ? 2.5 : 1.5,
   };
 }
 
-export default function MapMarkers({ pois, visibleIds, highlightedId, onMarkerClick }: Props) {
+function shortlistIcon(highlighted: boolean): google.maps.Icon {
+  const size = highlighted ? 26 : 22;
+  const r = highlighted ? 9 : 7;
+  const cx = size / 2;
+  const glowR = r + 5;
+  const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="${cx}" cy="${cx}" r="${glowR}" fill="rgba(255,45,120,0.15)"/>
+    <circle cx="${cx}" cy="${cx}" r="${r}" fill="#00F0FF"/>
+    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="#FF2D78" stroke-width="2.5"/>
+  </svg>`;
+  const url = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  return {
+    url,
+    scaledSize: new google.maps.Size(size, size),
+    anchor: new google.maps.Point(cx, cx),
+  };
+}
+
+export default function MapMarkers({
+  pois,
+  visibleIds,
+  shortlistIds,
+  highlightedId,
+  onMarkerClick,
+  hideAll = false,
+}: Props) {
   const map = useMap();
   const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
   const onClickRef = useRef(onMarkerClick);
 
   useEffect(() => { onClickRef.current = onMarkerClick; }, [onMarkerClick]);
 
-  // Create or remove markers as pois list changes
+  // Create / remove markers when pois list changes
   useEffect(() => {
     if (!map) return;
-
     const currentIds = new Set(pois.map((p) => p.placeId));
 
-    // Remove stale markers
     for (const [id, marker] of markersRef.current) {
       if (!currentIds.has(id)) {
         marker.setMap(null);
@@ -44,14 +69,16 @@ export default function MapMarkers({ pois, visibleIds, highlightedId, onMarkerCl
       }
     }
 
-    // Add new markers
     for (const poi of pois) {
       if (!markersRef.current.has(poi.placeId)) {
+        const isShortlisted = shortlistIds.has(poi.placeId);
+        const isHighlighted = poi.placeId === highlightedId;
         const marker = new google.maps.Marker({
           position: { lat: poi.lat, lng: poi.lng },
           map,
-          icon: makeIcon(poi.placeId === highlightedId),
-          optimized: true,
+          icon: isShortlisted ? shortlistIcon(isHighlighted) : browseIcon(isHighlighted),
+          optimized: !isShortlisted, // SVG icons can't be optimized
+          zIndex: isShortlisted ? 10 : undefined,
         });
         marker.addListener("click", () => onClickRef.current(poi.placeId));
         markersRef.current.set(poi.placeId, marker);
@@ -59,21 +86,26 @@ export default function MapMarkers({ pois, visibleIds, highlightedId, onMarkerCl
     }
   }, [map, pois]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Show / hide based on filter
+  // Show / hide based on filter or route mode
   useEffect(() => {
     for (const [id, marker] of markersRef.current) {
-      marker.setVisible(visibleIds.has(id));
+      marker.setVisible(!hideAll && visibleIds.has(id));
     }
-  }, [visibleIds]);
+  }, [visibleIds, hideAll]);
 
-  // Update icon for highlighted marker
+  // Update icons when shortlist or highlight changes
   useEffect(() => {
     for (const [id, marker] of markersRef.current) {
-      marker.setIcon(makeIcon(id === highlightedId));
-      if (id === highlightedId) marker.setZIndex(999);
-      else marker.setZIndex(undefined);
+      const isShortlisted = shortlistIds.has(id);
+      const isHighlighted = id === highlightedId;
+      marker.setIcon(
+        isShortlisted ? shortlistIcon(isHighlighted) : browseIcon(isHighlighted)
+      );
+      marker.setZIndex(isShortlisted ? 10 : isHighlighted ? 5 : undefined);
+      // SVG icon markers can't be batched (optimized: false needed)
+      marker.setOptions({ optimized: !isShortlisted });
     }
-  }, [highlightedId]);
+  }, [shortlistIds, highlightedId]);
 
   // Cleanup on unmount
   useEffect(() => {
