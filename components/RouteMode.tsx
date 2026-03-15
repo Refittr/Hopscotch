@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { RouteState, HopOption, AISuggestion, CompletedHop } from "@/types/route";
 import type { POI } from "@/types/poi";
 import { formatWalkTime, formatDistanceKm } from "@/lib/routeUtils";
@@ -536,6 +536,13 @@ function HoppingView({
 }) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const pendingOption = state.hopOptions.find((o) => o.poi.placeId === pendingId) ?? null;
+  const confirmBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (pendingOption) {
+      setTimeout(() => confirmBtnRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+    }
+  }, [pendingId]);
 
   const handleCardClick = (opt: HopOption) => {
     if (pendingId === opt.poi.placeId) {
@@ -614,6 +621,7 @@ function HoppingView({
           </div>
           {pendingOption && (
             <button
+              ref={confirmBtnRef}
               onClick={() => { onHopSelect(pendingOption); setPendingId(null); }}
               className="w-full py-3 rounded-xl text-sm font-semibold transition-all"
               style={{
