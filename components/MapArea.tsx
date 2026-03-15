@@ -131,6 +131,7 @@ export default function MapArea({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!window.matchMedia("(hover: none)").matches) return; // desktop — let Google Maps handle mouse drag natively
     const el = containerRef.current;
     if (!el) return;
     let lastX = 0, lastY = 0;
