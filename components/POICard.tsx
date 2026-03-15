@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { POI } from "@/types/poi";
 import { getCategoryEmoji } from "@/lib/placesCategories";
 
-function InfoTooltip({ poi }: { poi: POI }) {
+function InfoTooltip({ poi, index }: { poi: POI; index: number }) {
   const [visible, setVisible] = useState(false);
   const [description, setDescription] = useState<string | null>(null);
   const [loadingDesc, setLoadingDesc] = useState(false);
@@ -45,7 +45,9 @@ function InfoTooltip({ poi }: { poi: POI }) {
         <div
           className="absolute z-50 rounded-xl"
           style={{
-            bottom: "calc(100% + 8px)",
+            ...(index < 2
+              ? { top: "calc(100% + 8px)" }
+              : { bottom: "calc(100% + 8px)" }),
             right: 0,
             width: "220px",
             background: "#1a1714",
@@ -214,7 +216,7 @@ export default function POICard({ poi, highlighted, isShortlisted, onAdd, onHigh
         )}
       </div>
 
-      <InfoTooltip poi={poi} />
+      <InfoTooltip poi={poi} index={index} />
 
       {/* Add / shortlisted button */}
       <button

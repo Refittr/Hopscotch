@@ -23,6 +23,7 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   const autocompleteRef = useRef<google.maps.places.AutocompleteService | null>(null);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
@@ -97,6 +98,7 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
     setOpen(false);
     setSuggestions([]);
     setQuery(suggestion.mainText);
+    inputRef.current?.blur();
 
     geocoderRef.current.geocode(
       { placeId: suggestion.placeId },
@@ -153,6 +155,7 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
           />
         </svg>
         <input
+          ref={inputRef}
           type="text"
           value={query}
           placeholder="Search a city..."
