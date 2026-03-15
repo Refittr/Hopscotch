@@ -4,18 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import type { POI } from "@/types/poi";
 import { getCategoryEmoji } from "@/lib/placesCategories";
 
-const SKIP_TYPES = new Set([
-  "point_of_interest", "establishment", "food", "store", "premise",
-  "political", "locality", "geocode", "route",
-]);
-
 function InfoTooltip({ poi }: { poi: POI }) {
   const [visible, setVisible] = useState(false);
-  const tags = poi.types
-    .filter((t) => !SKIP_TYPES.has(t))
-    .slice(0, 4)
-    .map((t) => t.replace(/_/g, " "));
+  const [description, setDescription] = useState<string | null>(null);
+  const [loadingDesc, setLoadingDesc] = useState(false);
+  const fetchedRef = useRef(false);
   const stars = poi.rating ? Math.round(poi.rating) : 0;
+
+  useEffect(() => {
+    if (!visible || fetchedRef.current) return;
+    fetchedRef.current = true;
+    setLoadingDesc(true);
+    fetch(`/api/place-details?placeId=${encodeURIComponent(poi.placeId)}`)
+      .then((r) => r.json())
+      .then((d) => setDescription(d.description ?? null))
+      .catch(() => {})
+      .finally(() => setLoadingDesc(false));
+  }, [visible, poi.placeId]);
 
   return (
     <div className="relative flex-shrink-0" style={{ lineHeight: 0 }}>
@@ -42,14 +47,14 @@ function InfoTooltip({ poi }: { poi: POI }) {
           style={{
             bottom: "calc(100% + 8px)",
             right: 0,
-            width: "200px",
+            width: "220px",
             background: "#1a1714",
             border: "1px solid var(--border)",
             boxShadow: "0 12px 32px rgba(0,0,0,0.7)",
             overflow: "hidden",
           }}
         >
-          {/* Header strip */}
+          {/* Header */}
           <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--border)", background: "var(--input-bg)" }}>
             <p className="text-xs font-semibold truncate" style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}>
               {getCategoryEmoji(poi.category)} {poi.name}
@@ -57,14 +62,29 @@ function InfoTooltip({ poi }: { poi: POI }) {
             <p className="text-xs mt-0.5" style={{ color: "var(--accent)", fontFamily: "var(--font-dm-sans)", letterSpacing: "0.1em", textTransform: "uppercase", fontSize: "9px" }}>
               {poi.category}
             </p>
-            {poi.vicinity && (
-              <p className="text-xs mt-1" style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)", fontSize: "10px" }}>
-                📍 {poi.vicinity}
-              </p>
-            )}
           </div>
 
           <div className="px-3 py-2.5 flex flex-col gap-2">
+            {/* Description */}
+            {loadingDesc && (
+              <div className="flex gap-1 flex-col">
+                <div className="skeleton h-2 rounded w-full" />
+                <div className="skeleton h-2 rounded w-4/5" />
+              </div>
+            )}
+            {!loadingDesc && description && (
+              <p className="text-xs leading-relaxed" style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}>
+                {description}
+              </p>
+            )}
+
+            {/* Vicinity */}
+            {poi.vicinity && (
+              <p className="text-xs" style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)", fontSize: "10px" }}>
+                📍 {poi.vicinity}
+              </p>
+            )}
+
             {/* Rating */}
             {poi.rating != null && (
               <div className="flex items-center gap-1.5">
@@ -91,21 +111,6 @@ function InfoTooltip({ poi }: { poi: POI }) {
                 <span className="text-xs" style={{ color: poi.isOpen ? "#4ade80" : "#f87171", fontFamily: "var(--font-dm-sans)" }}>
                   {poi.isOpen ? "Open now" : "Currently closed"}
                 </span>
-              </div>
-            )}
-
-            {/* Tags */}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-1.5 py-0.5 rounded text-xs capitalize"
-                    style={{ background: "var(--border)", color: "var(--muted)", fontFamily: "var(--font-dm-sans)", fontSize: "9px" }}
-                  >
-                    {tag}
-                  </span>
-                ))}
               </div>
             )}
           </div>
