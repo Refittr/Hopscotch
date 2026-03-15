@@ -1049,7 +1049,7 @@ export default function RouteMode({
             onToast={onToast}
           />
         )}
-        <div style={{ height: "40px" }} />
+        <div style={{ height: "80px" }} />
       </div>
     </aside>
   );

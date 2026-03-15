@@ -469,7 +469,7 @@ export default function Home() {
           <div style={{ height: "38vh", flexShrink: 0, position: "relative", overflow: "clip" }}>
             {mapArea}
           </div>
-          <div style={{ height: "62vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <div style={{ height: "62vh", overflow: "clip", display: "flex", flexDirection: "column" }}>
             {routeState ? (
               <RouteMode
                 routeState={routeState}
