@@ -18,6 +18,7 @@ interface Props {
 export default function CitySearch({ selectedCity, onCitySelect }: Props) {
   const placesLib = useMapsLibrary("places");
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -35,10 +36,16 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
     sessionTokenRef.current = new placesLib.AutocompleteSessionToken();
   }, [placesLib]);
 
+  // Debounce query → debouncedQuery
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
   // Fetch suggestions as user types
   useEffect(() => {
     if (isSelectingRef.current) return;
-    if (!autocompleteRef.current || query.length < 2) {
+    if (!autocompleteRef.current || debouncedQuery.length < 2) {
       setSuggestions([]);
       setOpen(false);
       return;
@@ -46,7 +53,7 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
 
     autocompleteRef.current.getPlacePredictions(
       {
-        input: query,
+        input: debouncedQuery,
         types: ["(cities)"],
         sessionToken: sessionTokenRef.current ?? undefined,
       },
@@ -69,7 +76,7 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
         setOpen(true);
       }
     );
-  }, [query]);
+  }, [debouncedQuery]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

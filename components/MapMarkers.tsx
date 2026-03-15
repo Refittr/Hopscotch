@@ -13,14 +13,30 @@ interface Props {
   hideAll?: boolean;
 }
 
-function browseIcon(highlighted: boolean): google.maps.Symbol {
+function browseIcon(highlighted: boolean): google.maps.Symbol | google.maps.Icon {
+  if (highlighted) {
+    const size = 28;
+    const c = size / 2;
+    const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${c}" cy="${c}" r="5" fill="#00F0FF" stroke="white" stroke-width="2"/>
+      <circle cx="${c}" cy="${c}" r="5" fill="none" stroke="#00F0FF" stroke-width="1.5">
+        <animate attributeName="r" from="5" to="12" dur="1s" repeatCount="indefinite"/>
+        <animate attributeName="stroke-opacity" from="0.8" to="0" dur="1s" repeatCount="indefinite"/>
+      </circle>
+    </svg>`;
+    return {
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+      scaledSize: new google.maps.Size(size, size),
+      anchor: new google.maps.Point(c, c),
+    };
+  }
   return {
     path: google.maps.SymbolPath.CIRCLE,
-    scale: highlighted ? 9 : 6,
+    scale: 6,
     fillColor: "#00F0FF",
-    fillOpacity: highlighted ? 0.95 : 0.6,
-    strokeColor: highlighted ? "#ffffff" : "rgba(0,240,255,0.3)",
-    strokeWeight: highlighted ? 2.5 : 1.5,
+    fillOpacity: 0.6,
+    strokeColor: "rgba(0,240,255,0.3)",
+    strokeWeight: 1.5,
   };
 }
 
@@ -102,8 +118,7 @@ export default function MapMarkers({
         isShortlisted ? shortlistIcon(isHighlighted) : browseIcon(isHighlighted)
       );
       marker.setZIndex(isShortlisted ? 10 : isHighlighted ? 5 : undefined);
-      // SVG icon markers can't be batched (optimized: false needed)
-      marker.setOptions({ optimized: !isShortlisted });
+      marker.setOptions({ optimized: !isShortlisted && !isHighlighted });
     }
   }, [shortlistIds, highlightedId]);
 

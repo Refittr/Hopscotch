@@ -120,7 +120,7 @@ export default function BrowsePanel({
 
         {!isLoading && pois.length > 0 && (
           <div className="flex flex-col gap-2">
-            {pois.map((poi) => (
+            {pois.map((poi, i) => (
               <POICard
                 key={poi.placeId}
                 poi={poi}
@@ -128,6 +128,7 @@ export default function BrowsePanel({
                 isShortlisted={shortlistIds.has(poi.placeId)}
                 onAdd={onAddToShortlist}
                 onHighlight={onHighlight}
+                index={i}
               />
             ))}
           </div>

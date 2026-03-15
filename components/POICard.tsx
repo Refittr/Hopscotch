@@ -121,11 +121,13 @@ interface Props {
   isShortlisted: boolean;
   onAdd: (poi: POI) => void;
   onHighlight?: (placeId: string | null) => void;
+  index?: number;
 }
 
-export default function POICard({ poi, highlighted, isShortlisted, onAdd, onHighlight }: Props) {
+export default function POICard({ poi, highlighted, isShortlisted, onAdd, onHighlight, index = 0 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   useEffect(() => {
     if (highlighted && ref.current) {
@@ -136,27 +138,34 @@ export default function POICard({ poi, highlighted, isShortlisted, onAdd, onHigh
   return (
     <div
       ref={ref}
-      className="poi-card flex items-center gap-3 p-2.5 rounded-lg cursor-pointer"
+      className="poi-card poi-enter flex items-center gap-3 p-2.5 rounded-lg cursor-pointer"
       onMouseEnter={() => onHighlight?.(poi.placeId)}
       onMouseLeave={() => onHighlight?.(null)}
       style={{
         background: highlighted ? "var(--accent-dim)" : "var(--input-bg)",
         border: `1px solid ${highlighted ? "var(--accent)" : "var(--border)"}`,
         transition: "border-color 0.2s, background 0.2s",
+        animationDelay: `${Math.min(index * 30, 300)}ms`,
       }}
     >
       {/* Thumbnail */}
       <div
-        className="w-12 h-12 rounded-md flex-shrink-0 overflow-hidden flex items-center justify-center"
+        className="relative w-12 h-12 rounded-md flex-shrink-0 overflow-hidden flex items-center justify-center"
         style={{ background: "var(--border)", fontSize: "20px" }}
       >
         {poi.photoUrl && !imgError ? (
-          <img
-            src={poi.photoUrl}
-            alt={poi.name}
-            className="w-full h-full object-cover"
-            onError={() => setImgError(true)}
-          />
+          <>
+            {!imgLoaded && <div className="skeleton absolute inset-0" />}
+            <img
+              src={poi.photoUrl}
+              alt={poi.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+              style={{ opacity: imgLoaded ? 1 : 0, transition: "opacity 0.2s ease" }}
+            />
+          </>
         ) : (
           <span>{getCategoryEmoji(poi.category)}</span>
         )}

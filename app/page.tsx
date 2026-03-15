@@ -7,7 +7,7 @@ import BrowsePanel from "@/components/BrowsePanel";
 import RouteMode from "@/components/RouteMode";
 import MapArea from "@/components/MapArea";
 import MobileSidebar from "@/components/MobileSidebar";
-import Toast from "@/components/Toast";
+import Toast, { ToastStack, useToasts } from "@/components/Toast";
 import type { POI } from "@/types/poi";
 import type { RouteState, HopOption, HopPosition } from "@/types/route";
 import { poiMatchesVibes } from "@/lib/placesCategories";
@@ -30,7 +30,7 @@ export default function Home() {
   const [highlightedPoiId, setHighlightedPoiId] = useState<string | null>(null);
   const [shortlist, setShortlist] = useState<POI[]>([]);
   const [showMaxToast, setShowMaxToast] = useState(false);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const { toasts, push: pushToast, remove: removeToast } = useToasts();
 
   // ── Route state ─────────────────────────────────────────────────────────
   const [routeState, setRouteState] = useState<RouteState | null>(null);
@@ -91,13 +91,18 @@ export default function Home() {
         setShowMaxToast(true);
         return prev;
       }
+      pushToast(`Added — ${poi.name}`, "✦");
       return [...prev, poi];
     });
-  }, []);
+  }, [pushToast]);
 
   const handleRemoveFromShortlist = useCallback((placeId: string) => {
-    setShortlist((prev) => prev.filter((p) => p.placeId !== placeId));
-  }, []);
+    setShortlist((prev) => {
+      const item = prev.find((p) => p.placeId === placeId);
+      if (item) pushToast(`Removed — ${item.name}`, "✕");
+      return prev.filter((p) => p.placeId !== placeId);
+    });
+  }, [pushToast]);
 
   const handleReorderShortlist = useCallback((newList: POI[]) => {
     setShortlist(newList);
@@ -414,7 +419,7 @@ export default function Home() {
               onBackToPlanning={handleBackToPlanning}
               onSpotHover={setHoveredHopOptionId}
               onSuggestionHover={handleSuggestionHover}
-              onToast={setToastMsg}
+              onToast={pushToast}
             />
           ) : (
             <>
@@ -457,11 +462,7 @@ export default function Home() {
         visible={showMaxToast}
         onDone={() => setShowMaxToast(false)}
       />
-      <Toast
-        message={toastMsg ?? ""}
-        visible={toastMsg !== null}
-        onDone={() => setToastMsg(null)}
-      />
+      <ToastStack toasts={toasts} onRemove={removeToast} />
     </APIProvider>
   );
 }
