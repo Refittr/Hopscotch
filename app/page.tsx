@@ -7,6 +7,7 @@ import BrowsePanel from "@/components/BrowsePanel";
 import RouteMode from "@/components/RouteMode";
 import MapArea from "@/components/MapArea";
 import MobileSidebar from "@/components/MobileSidebar";
+import MobileWarning from "@/components/MobileWarning";
 import Toast, { ToastStack, useToasts } from "@/components/Toast";
 import type { POI } from "@/types/poi";
 import type { RouteState, HopOption, HopPosition } from "@/types/route";
@@ -463,6 +464,7 @@ export default function Home() {
         onDone={() => setShowMaxToast(false)}
       />
       <ToastStack toasts={toasts} onRemove={removeToast} />
+      <MobileWarning />
     </APIProvider>
   );
 }
