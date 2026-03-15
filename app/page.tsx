@@ -468,10 +468,10 @@ export default function Home() {
       ) : (
         /* ── Mobile layout ── */
         <div className="flex flex-col h-screen" style={{ overflow: "clip" }}>
-          <div style={{ height: "38vh", flexShrink: 0, position: "relative", overflow: "clip" }}>
+          <div style={{ height: "calc(38vh - 30px)", flexShrink: 0, position: "relative", overflow: "clip" }}>
             {mapArea}
           </div>
-          <div style={{ height: "62vh", overflow: "clip", display: "flex", flexDirection: "column" }}>
+          <div style={{ height: "calc(62vh + 30px)", overflow: "clip", display: "flex", flexDirection: "column" }}>
             {routeState ? (
               <RouteMode
                 routeState={routeState}
