@@ -466,7 +466,7 @@ export default function Home() {
       ) : (
         /* ── Mobile layout ── */
         <div className="flex flex-col h-screen" style={{ overflow: "hidden" }}>
-          <div style={{ height: "38vh", flexShrink: 0, position: "relative", touchAction: "none" }}>
+          <div style={{ height: "38vh", flexShrink: 0, position: "relative", touchAction: "none", overflow: "hidden" }}>
             {mapArea}
           </div>
           <div style={{ height: "62vh" }}>
