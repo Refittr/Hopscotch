@@ -8,12 +8,13 @@ const supabase = createClient(
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
+  const { code } = await params;
   const { data, error } = await supabase
     .from("shared_routes")
     .select("short_code, city_name, stops, created_at")
-    .eq("short_code", params.code)
+    .eq("short_code", code)
     .single();
 
   if (error || !data) {
