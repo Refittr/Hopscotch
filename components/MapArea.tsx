@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Map, useMap } from "@vis.gl/react-google-maps";
 import AdUnit from "./AdUnit";
 import type { SelectedCity } from "@/app/page";
@@ -132,9 +132,22 @@ export default function MapArea({
   hoveredHopOptionId,
   suggestionPreviewPos,
 }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const prevent = (e: TouchEvent) => e.preventDefault();
+    el.addEventListener("touchstart", prevent, { passive: false });
+    el.addEventListener("touchmove", prevent, { passive: false });
+    return () => {
+      el.removeEventListener("touchstart", prevent);
+      el.removeEventListener("touchmove", prevent);
+    };
+  }, []);
+
   const inRouteMode = routeState !== null;
   return (
-    <div className="absolute inset-0 md:relative md:flex-1" style={{ minHeight: 0 }}>
+    <div ref={containerRef} className="absolute inset-0 md:relative md:flex-1" style={{ minHeight: 0 }}>
       <POIFetcher
         selectedCity={selectedCity}
         onPoisLoaded={onPoisLoaded}
