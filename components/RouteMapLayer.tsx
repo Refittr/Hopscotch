@@ -221,7 +221,7 @@ export default function RouteMapLayer({ routeState, shortlist, hoveredHopOptionI
           bounds.extend({ lat: o.poi.lat, lng: o.poi.lng })
         );
         const narrow = map.getDiv().clientWidth < 600;
-        map.fitBounds(bounds, { top: 60, right: 40, bottom: narrow ? 220 : 80, left: narrow ? 20 : 440 });
+        map.fitBounds(bounds, { top: 60, right: 40, bottom: 60, left: narrow ? 20 : 440 });
       }
     }
 

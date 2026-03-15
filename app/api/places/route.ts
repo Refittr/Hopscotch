@@ -30,6 +30,7 @@ import { SEARCH_TYPES, getCategoryLabel } from "@/lib/placesCategories";
 const CACHE_TTL_MS   = 24 * 60 * 60 * 1000;   // 24 hours
 const CLEANUP_AGE_MS = 7  * 24 * 60 * 60 * 1000; // 7 days
 const RADIUS         = 5000;
+const CACHE_VERSION  = "v2"; // bump when cached data shape changes
 
 const db = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,6 +50,8 @@ export async function POST(req: NextRequest) {
     const { cityName, lat, lng }: { cityName: string; lat: number; lng: number } =
       await req.json();
 
+    const cacheKey = `${cityName}::${CACHE_VERSION}`;
+
     // ── Cleanup: delete entries older than 7 days ──────────────────────────
     const cleanup = new Date(Date.now() - CLEANUP_AGE_MS).toISOString();
     await db.from("cached_places").delete().lt("cached_at", cleanup);
@@ -58,7 +61,7 @@ export async function POST(req: NextRequest) {
     const { data: cached, error: cacheErr } = await db
       .from("cached_places")
       .select("place_id, name, lat, lng, rating, total_ratings, category, types, photo_reference")
-      .eq("city_name", cityName)
+      .eq("city_name", cacheKey)
       .gte("cached_at", freshSince);
 
     if (!cacheErr && cached && cached.length > 0) {
@@ -141,7 +144,7 @@ export async function POST(req: NextRequest) {
     // ── Upsert to Supabase ─────────────────────────────────────────────────
     if (pois.length > 0) {
       const rows = pois.map((p) => ({
-        city_name:       cityName,
+        city_name:       cacheKey,
         place_id:        p.placeId,
         name:            p.name,
         lat:             p.lat,
