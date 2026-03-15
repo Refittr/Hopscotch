@@ -401,7 +401,7 @@ export default function Home() {
 
   return (
     <APIProvider apiKey={apiKey} libraries={["places"]}>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen" style={{ overflow: "clip" }}>
         {/* Desktop panels */}
         <div className="hidden md:flex">
           {routeState ? (

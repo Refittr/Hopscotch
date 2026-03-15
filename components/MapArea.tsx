@@ -116,7 +116,7 @@ export default function MapArea({
 }: Props) {
   const inRouteMode = routeState !== null;
   return (
-    <div className="flex-1 relative overflow-hidden">
+    <div className="flex-1 relative" style={{ overflow: "clip" }}>
       <POIFetcher
         selectedCity={selectedCity}
         onPoisLoaded={onPoisLoaded}

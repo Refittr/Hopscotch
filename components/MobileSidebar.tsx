@@ -95,7 +95,7 @@ export default function MobileSidebar(props: Props) {
 
         {/* Always-visible content when collapsed */}
         {!expanded && (
-          <div className="flex-1 overflow-hidden px-4 pb-4">
+          <div className="flex-1 min-h-0 px-4 pb-4" style={{ overflow: "hidden", touchAction: "pan-y" }}>
             <Sidebar {...props} hideHeader />
           </div>
         )}
