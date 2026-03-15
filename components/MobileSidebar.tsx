@@ -125,6 +125,7 @@ export default function MobileSidebar(props: Props) {
                   hasCity={selectedCity != null}
                   shortlistIds={shortlistIds}
                   onAddToShortlist={onAddToShortlist}
+                  onHighlight={() => {}}
                 />
               )}
             </div>
