@@ -4,6 +4,7 @@ import { useState } from "react";
 import Sidebar from "./Sidebar";
 import BrowsePanel from "./BrowsePanel";
 import HelpModal from "./HelpModal";
+import ContactModal from "./ContactModal";
 import AdUnit from "./AdUnit";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
@@ -30,12 +31,14 @@ export default function MobileSidebar(props: Props) {
   const [fullscreen, setFullscreen] = useState(false);
   const [tab, setTab] = useState<"controls" | "browse">("controls");
   const [showHelp, setShowHelp] = useState(false);
+  const [showContact, setShowContact] = useState(false);
 
   const { filteredPois, isLoading, highlightedPoiId, selectedCity, shortlistIds, onAddToShortlist, onRemoveFromShortlist, onStartRoute, onHighlight } = props;
 
   return (
     <>
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+      {showContact && <ContactModal onClose={() => setShowContact(false)} />}
 
       {/* Expanded: fills 62vh panel or fullscreen */}
       {expanded && (
@@ -170,15 +173,12 @@ export default function MobileSidebar(props: Props) {
       {!expanded && (
         <div className="flex flex-col h-full" style={{ background: "var(--sidebar-bg)", borderTop: "1px solid var(--border)" }}>
           {/* Handle bar */}
-          <button
-            className="flex items-center justify-between px-4 w-full flex-shrink-0"
-            style={{ touchAction: "manipulation", paddingTop: "12px", paddingBottom: "12px", borderBottom: "1px solid var(--border)" }}
-            onClick={() => {
-              if (filteredPois.length > 0) setTab("browse");
-              setExpanded(true);
-            }}
-          >
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center px-4 w-full flex-shrink-0" style={{ paddingTop: "12px", paddingBottom: "12px", borderBottom: "1px solid var(--border)" }}>
+            <button
+              className="flex items-center gap-3 min-w-0 flex-1"
+              style={{ touchAction: "manipulation" }}
+              onClick={() => { if (filteredPois.length > 0) setTab("browse"); setExpanded(true); }}
+            >
               <span style={{ fontFamily: "var(--font-display)", fontSize: "20px", color: "var(--accent)", flexShrink: 0, textShadow: "0 0 16px rgba(0,240,255,0.3)" }}>
                 Hopscotch
               </span>
@@ -197,27 +197,25 @@ export default function MobileSidebar(props: Props) {
                   CITY EXPLORER
                 </span>
               )}
-            </div>
-            <div
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0"
-              style={{
-                background: selectedCity && !isLoading ? "var(--accent-dim)" : "var(--border)",
-                border: selectedCity && !isLoading ? "1px solid var(--accent)" : "1px solid transparent",
-                boxShadow: selectedCity && !isLoading ? "0 0 10px rgba(0,240,255,0.2)" : "none",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <span
-                className="text-xs font-semibold"
-                style={{ color: selectedCity && !isLoading ? "var(--accent)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
+            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button onClick={() => setShowContact(true)} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "var(--border)", color: "var(--muted)" }} aria-label="Contact">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M2 6l10 7 10-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </button>
+              <button
+                onClick={() => { if (filteredPois.length > 0) setTab("browse"); setExpanded(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0"
+                style={{ background: selectedCity && !isLoading ? "var(--accent-dim)" : "var(--border)", border: selectedCity && !isLoading ? "1px solid var(--accent)" : "1px solid transparent", boxShadow: selectedCity && !isLoading ? "0 0 10px rgba(0,240,255,0.2)" : "none", transition: "all 0.2s ease" }}
               >
-                {selectedCity && !isLoading ? "Browse" : "Explore"}
-              </span>
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ color: selectedCity && !isLoading ? "var(--accent)" : "var(--muted)" }}>
-                <path d="M2 8L6 4L10 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+                <span className="text-xs font-semibold" style={{ color: selectedCity && !isLoading ? "var(--accent)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
+                  {selectedCity && !isLoading ? "Browse" : "Explore"}
+                </span>
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ color: selectedCity && !isLoading ? "var(--accent)" : "var(--muted)" }}>
+                  <path d="M2 8L6 4L10 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             </div>
-          </button>
+          </div>
 
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto px-4 min-h-0">

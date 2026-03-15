@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import CitySearch from "./CitySearch";
 import MyListSection from "./MyListSection";
 import HelpModal from "./HelpModal";
+import ContactModal from "./ContactModal";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
 
@@ -54,6 +55,7 @@ export default function Sidebar({
   const prevCountRef = useRef(0);
   const [badgePulsing, setBadgePulsing] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showContact, setShowContact] = useState(false);
 
   useEffect(() => {
     if (shortlist.length > prevCountRef.current) {
@@ -220,7 +222,14 @@ export default function Sidebar({
             </span>
           )}
         </button>
+        <div className="flex justify-center mt-3">
+          <button onClick={() => setShowContact(true)} className="flex items-center gap-1.5 text-xs" style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M2 6l10 7 10-7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Contact
+          </button>
+        </div>
       </div>
+      {showContact && <ContactModal onClose={() => setShowContact(false)} />}
     </aside>
   );
 }
