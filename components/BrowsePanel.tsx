@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { POI } from "@/types/poi";
 import POICard from "./POICard";
 
@@ -38,6 +39,11 @@ export default function BrowsePanel({
   onAddToShortlist,
   onHighlight,
 }: Props) {
+  const [search, setSearch] = useState("");
+  const filtered = search.trim()
+    ? pois.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    : pois;
+
   return (
     <div
       className="flex flex-col h-full"
@@ -82,6 +88,35 @@ export default function BrowsePanel({
         )}
       </div>
 
+      {/* Search */}
+      {!isLoading && pois.length > 0 && (
+        <div className="px-3 pt-3 pb-1 flex-shrink-0">
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-lg"
+            style={{ background: "var(--input-bg)", border: "1px solid var(--border)" }}
+          >
+            <svg width="13" height="13" viewBox="0 0 15 15" fill="none" style={{ color: "var(--muted)", flexShrink: 0 }}>
+              <path d="M10 6.5C10 8.43 8.43 10 6.5 10C4.57 10 3 8.43 3 6.5C3 4.57 4.57 3 6.5 3C8.43 3 10 4.57 10 6.5ZM9.44 10.15L12.15 12.85" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Filter spots…"
+              className="flex-1 bg-transparent text-xs outline-none min-w-0"
+              style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} style={{ color: "var(--muted)", lineHeight: 0 }}>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M1.5 1.5L8.5 8.5M8.5 1.5L1.5 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto px-3 py-3 min-h-0">
         {isLoading && (
@@ -120,7 +155,7 @@ export default function BrowsePanel({
 
         {!isLoading && pois.length > 0 && (
           <div className="flex flex-col gap-2">
-            {pois.map((poi, i) => (
+            {filtered.map((poi, i) => (
               <POICard
                 key={poi.placeId}
                 poi={poi}
