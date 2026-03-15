@@ -36,10 +36,11 @@ export default function MobileSidebar(props: Props) {
   } = props;
 
   return (
-    <div className="md:hidden fixed inset-x-0 bottom-0 z-50">
+    <div className="md:hidden fixed inset-x-0 bottom-0 z-50" style={{ pointerEvents: "none" }}>
       {expanded && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+          style={{ pointerEvents: "auto" }}
           onClick={() => setExpanded(false)}
         />
       )}
@@ -51,11 +52,13 @@ export default function MobileSidebar(props: Props) {
           border: "1px solid var(--border)",
           borderBottom: "none",
           height: expanded ? "85vh" : "64px",
+          pointerEvents: "auto",
         }}
       >
         {/* Handle bar */}
         <button
           className="flex items-center justify-between px-5 py-4 w-full flex-shrink-0"
+          style={{ touchAction: "manipulation" }}
           onClick={() => setExpanded((v) => !v)}
         >
           <div className="flex items-center gap-3">
