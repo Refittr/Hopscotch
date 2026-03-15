@@ -176,7 +176,7 @@ export default function MapArea({
   const inRouteMode = routeState !== null;
   return (
     <div ref={containerRef} className="absolute inset-0 md:relative md:flex-1 flex flex-col" style={{ minHeight: 0 }}>
-      <div className="hidden md:block flex-shrink-0">
+      <div className="hidden md:block flex-shrink-0" style={{ height: "90px", overflow: "hidden" }}>
         <AdUnit slot="2261277039" format="horizontal" />
       </div>
       <POIFetcher
@@ -192,7 +192,7 @@ export default function MapArea({
         disableDefaultUI
         gestureHandling="greedy"
         styles={DARK_MAP_STYLES}
-        style={{ width: "100%", height: "100%" }}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       >
         <GestureEnabler mapRef={mapRef} />
         <MapMarkers
