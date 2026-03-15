@@ -18,6 +18,7 @@ const VIBES = [
 
 interface Props {
   hideHeader?: boolean;
+  scrollable?: boolean;
   selectedCity: SelectedCity | null;
   onCitySelect: (city: SelectedCity | null) => void;
   filteredPois: POI[];
@@ -35,6 +36,7 @@ interface Props {
 
 export default function Sidebar({
   hideHeader,
+  scrollable,
   selectedCity,
   onCitySelect,
   activeVibes,
@@ -63,7 +65,7 @@ export default function Sidebar({
   const canStartRoute = shortlist.length >= 2;
   return (
     <aside
-      className="flex flex-col h-full flex-shrink-0"
+      className={`flex flex-col flex-shrink-0 ${scrollable ? "" : "h-full"}`}
       style={{
         width: hideHeader ? "100%" : "280px",
         minWidth: hideHeader ? undefined : "280px",
@@ -154,8 +156,8 @@ export default function Sidebar({
       {/* Divider */}
       <div style={{ height: "1px", background: "var(--border)", margin: "0 16px" }} />
 
-      {/* My List — scrollable, takes remaining space */}
-      <div className="flex flex-col flex-1 min-h-0 px-4 pt-4 pb-3">
+      {/* My List */}
+      <div className={`flex flex-col px-4 pt-4 pb-3 ${scrollable ? "" : "flex-1 min-h-0"}`}>
         <div className="flex items-center gap-2 mb-3 flex-shrink-0">
           <span
             className="text-sm font-medium"
@@ -176,7 +178,7 @@ export default function Sidebar({
             {shortlist.length}
           </span>
         </div>
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className={scrollable ? "" : "flex-1 overflow-y-auto min-h-0"}>
           <MyListSection
             shortlist={shortlist}
             onRemove={onRemoveFromShortlist}

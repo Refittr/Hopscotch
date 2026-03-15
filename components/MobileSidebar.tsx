@@ -98,7 +98,7 @@ export default function MobileSidebar(props: Props) {
             className="w-9 h-9 rounded-full flex items-center justify-center"
             style={{
               background: "var(--border)",
-              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+              transform: expanded ? "rotate(0deg)" : "rotate(180deg)",
               transition: "transform 0.2s ease",
             }}
           >
@@ -110,8 +110,11 @@ export default function MobileSidebar(props: Props) {
 
         {/* Always-visible content when collapsed */}
         {!expanded && (
-          <div className="flex-1 min-h-0 px-4 pb-4" style={{ overflow: "hidden", touchAction: "pan-y" }}>
-            <Sidebar {...props} hideHeader />
+          <div
+            className="flex-1 min-h-0 px-4 pb-4"
+            style={{ overflowY: "auto", WebkitOverflowScrolling: "touch" as never, touchAction: "pan-y" }}
+          >
+            <Sidebar {...props} hideHeader scrollable />
           </div>
         )}
 

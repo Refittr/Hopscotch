@@ -44,12 +44,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* POI card hover — show add button */
-.poi-card .add-btn {
-  opacity: 0;
-}
-.poi-card:hover .add-btn {
-  opacity: 1;
+/* POI card hover — show add button (desktop only; always visible on touch) */
+@media (hover: hover) {
+  .poi-card .add-btn {
+    opacity: 0;
+  }
+  .poi-card:hover .add-btn {
+    opacity: 1;
+  }
 }
 
 /* Badge pulse when item added */
