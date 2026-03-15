@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Map, useMap } from "@vis.gl/react-google-maps";
 import AdUnit from "./AdUnit";
 import type { SelectedCity } from "@/app/page";
@@ -86,40 +86,15 @@ const DEFAULT_ZOOM = 2;
 const CITY_ZOOM = 13;
 
 
-function GestureEnabler() {
+function GestureEnabler({ mapRef }: { mapRef: React.MutableRefObject<google.maps.Map | null> }) {
   const map = useMap();
   useEffect(() => {
     if (!map) return;
+    mapRef.current = map;
     map.setOptions({ gestureHandling: "greedy", draggable: true });
     google.maps.event.trigger(map, "resize");
-
-    const div = map.getDiv();
-    let lastX = 0;
-    let lastY = 0;
-
-    const onStart = (e: TouchEvent) => {
-      e.preventDefault();
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
-    };
-
-    const onMove = (e: TouchEvent) => {
-      e.preventDefault();
-      if (!e.touches.length) return;
-      const dx = lastX - e.touches[0].clientX;
-      const dy = lastY - e.touches[0].clientY;
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
-      map.panBy(dx, dy);
-    };
-
-    div.addEventListener("touchstart", onStart, { passive: false });
-    div.addEventListener("touchmove", onMove, { passive: false });
-    return () => {
-      div.removeEventListener("touchstart", onStart);
-      div.removeEventListener("touchmove", onMove);
-    };
-  }, [map]);
+    return () => { mapRef.current = null; };
+  }, [map, mapRef]);
   return null;
 }
 
@@ -152,9 +127,38 @@ export default function MapArea({
   hoveredHopOptionId,
   suggestionPreviewPos,
 }: Props) {
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    let lastX = 0, lastY = 0;
+    const onStart = (e: TouchEvent) => {
+      e.preventDefault();
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    };
+    const onMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (!e.touches.length || !mapRef.current) return;
+      const dx = lastX - e.touches[0].clientX;
+      const dy = lastY - e.touches[0].clientY;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+      mapRef.current.panBy(dx, dy);
+    };
+    el.addEventListener("touchstart", onStart, { passive: false });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+    };
+  }, []);
+
   const inRouteMode = routeState !== null;
   return (
-    <div className="absolute inset-0 md:relative md:flex-1" style={{ minHeight: 0 }}>
+    <div ref={containerRef} className="absolute inset-0 md:relative md:flex-1" style={{ minHeight: 0 }}>
       <POIFetcher
         selectedCity={selectedCity}
         onPoisLoaded={onPoisLoaded}
@@ -169,7 +173,7 @@ export default function MapArea({
         styles={DARK_MAP_STYLES}
         style={{ width: "100%", height: "100%" }}
       >
-        <GestureEnabler />
+        <GestureEnabler mapRef={mapRef} />
         <MapMarkers
           pois={pois}
           visibleIds={visibleIds}
