@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { POI } from "@/types/poi";
 import { getCategoryEmoji } from "@/lib/placesCategories";
 
 function InfoTooltip({ poi, index }: { poi: POI; index: number }) {
   const [visible, setVisible] = useState(false);
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const [description, setDescription] = useState<string | null>(null);
   const [loadingDesc, setLoadingDesc] = useState(false);
   const fetchedRef = useRef(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const stars = poi.rating ? Math.round(poi.rating) : 0;
 
   useEffect(() => {
@@ -22,12 +25,32 @@ function InfoTooltip({ poi, index }: { poi: POI; index: number }) {
       .finally(() => setLoadingDesc(false));
   }, [visible, poi.placeId]);
 
+  const showTooltip = () => {
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const style: React.CSSProperties = {
+      position: "fixed",
+      width: "220px",
+      right: window.innerWidth - rect.right,
+      zIndex: 9999,
+    };
+    if (spaceBelow < 280) {
+      style.bottom = window.innerHeight - rect.top + 8;
+    } else {
+      style.top = rect.bottom + 8;
+    }
+    setTooltipStyle(style);
+    setVisible(true);
+  };
+
   return (
     <div className="relative flex-shrink-0" style={{ lineHeight: 0 }}>
       <button
-        onMouseEnter={() => setVisible(true)}
+        ref={btnRef}
+        onMouseEnter={showTooltip}
         onMouseLeave={() => setVisible(false)}
-        onClick={(e) => { e.stopPropagation(); setVisible((v) => !v); }}
+        onClick={(e) => { e.stopPropagation(); visible ? setVisible(false) : showTooltip(); }}
         className="w-8 h-8 md:w-6 md:h-6 flex items-center justify-center rounded-full transition-colors"
         style={{
           background: "var(--border)",
@@ -41,14 +64,11 @@ function InfoTooltip({ poi, index }: { poi: POI; index: number }) {
       >
         i
       </button>
-      {visible && (
+      {visible && createPortal(
         <div
-          className="absolute z-50 rounded-xl"
+          className="rounded-xl"
           style={{
-            ...(index < 2
-              ? { top: "calc(100% + 8px)" }
-              : { bottom: "calc(100% + 8px)" }),
-            right: 0,
+            ...tooltipStyle,
             width: "220px",
             background: "#1a1714",
             border: "1px solid var(--border)",
@@ -116,7 +136,8 @@ function InfoTooltip({ poi, index }: { poi: POI; index: number }) {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -127,11 +148,12 @@ interface Props {
   highlighted: boolean;
   isShortlisted: boolean;
   onAdd: (poi: POI) => void;
+  onRemove?: (placeId: string) => void;
   onHighlight?: (placeId: string | null) => void;
   index?: number;
 }
 
-export default function POICard({ poi, highlighted, isShortlisted, onAdd, onHighlight, index = 0 }: Props) {
+export default function POICard({ poi, highlighted, isShortlisted, onAdd, onRemove, onHighlight, index = 0 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -226,14 +248,15 @@ export default function POICard({ poi, highlighted, isShortlisted, onAdd, onHigh
           border: `1px solid ${isShortlisted ? "var(--accent-secondary)" : "var(--accent)"}`,
           color: isShortlisted ? "#fff" : "var(--accent)",
           opacity: isShortlisted ? 1 : undefined,
-          cursor: isShortlisted ? "default" : "pointer",
+          cursor: "pointer",
           boxShadow: isShortlisted ? "0 0 8px rgba(255, 45, 120, 0.35)" : "none",
         }}
         onClick={(e) => {
           e.stopPropagation();
-          if (!isShortlisted) onAdd(poi);
+          if (isShortlisted) onRemove?.(poi.placeId);
+          else onAdd(poi);
         }}
-        aria-label={isShortlisted ? "Already in list" : `Add ${poi.name} to list`}
+        aria-label={isShortlisted ? `Remove ${poi.name} from list` : `Add ${poi.name} to list`}
       >
         {isShortlisted ? (
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">

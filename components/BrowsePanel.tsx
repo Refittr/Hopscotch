@@ -11,6 +11,7 @@ interface Props {
   hasCity: boolean;
   shortlistIds: Set<string>;
   onAddToShortlist: (poi: POI) => void;
+  onRemoveFromShortlist?: (placeId: string) => void;
   onHighlight: (placeId: string | null) => void;
   fullWidth?: boolean;
 }
@@ -38,6 +39,7 @@ export default function BrowsePanel({
   hasCity,
   shortlistIds,
   onAddToShortlist,
+  onRemoveFromShortlist,
   onHighlight,
   fullWidth,
 }: Props) {
@@ -164,6 +166,7 @@ export default function BrowsePanel({
                 highlighted={poi.placeId === highlightedPoiId}
                 isShortlisted={shortlistIds.has(poi.placeId)}
                 onAdd={onAddToShortlist}
+                onRemove={onRemoveFromShortlist}
                 onHighlight={onHighlight}
                 index={i}
               />

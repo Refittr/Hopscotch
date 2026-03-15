@@ -22,22 +22,24 @@ interface Props {
   onRemoveFromShortlist: (placeId: string) => void;
   onReorderShortlist: (newList: POI[]) => void;
   onStartRoute: () => void;
+  onHighlight: (placeId: string | null) => void;
 }
 
 export default function MobileSidebar(props: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const [tab, setTab] = useState<"controls" | "browse">("controls");
   const [showHelp, setShowHelp] = useState(false);
 
-  const { filteredPois, isLoading, highlightedPoiId, selectedCity, shortlistIds, onAddToShortlist, onStartRoute } = props;
+  const { filteredPois, isLoading, highlightedPoiId, selectedCity, shortlistIds, onAddToShortlist, onRemoveFromShortlist, onStartRoute, onHighlight } = props;
 
   return (
     <>
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
-      {/* Expanded: fills the 62vh panel, map stays visible above */}
+      {/* Expanded: fills 62vh panel or fullscreen */}
       {expanded && (
-        <div className="flex flex-col h-full" style={{ background: "var(--sidebar-bg)" }}>
+        <div className={fullscreen ? "fixed inset-0 z-50 flex flex-col" : "flex flex-col h-full"} style={{ background: "var(--sidebar-bg)" }}>
           {/* Header */}
           <div
             className="flex items-center justify-between px-5 flex-shrink-0"
@@ -55,15 +57,29 @@ export default function MobileSidebar(props: Props) {
                 ?
               </button>
             </div>
-            <button
-              onClick={() => setExpanded(false)}
-              className="w-9 h-9 rounded-full flex items-center justify-center"
-              style={{ background: "var(--border)" }}
-            >
-              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" style={{ color: "var(--muted)" }}>
-                <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setFullscreen(f => !f)}
+                className="w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ background: "var(--border)" }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ color: "var(--muted)" }}>
+                  {fullscreen
+                    ? <path d="M8 3v5H3M21 8h-5V3M16 21v-5h5M3 16h5v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    : <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  }
+                </svg>
+              </button>
+              <button
+                onClick={() => { setExpanded(false); setFullscreen(false); }}
+                className="w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ background: "var(--border)" }}
+              >
+                <svg width="13" height="13" viewBox="0 0 12 12" fill="none" style={{ color: "var(--muted)" }}>
+                  <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -135,7 +151,8 @@ export default function MobileSidebar(props: Props) {
                 hasCity={selectedCity != null}
                 shortlistIds={shortlistIds}
                 onAddToShortlist={onAddToShortlist}
-                onHighlight={() => {}}
+                onRemoveFromShortlist={onRemoveFromShortlist}
+                onHighlight={onHighlight}
                 fullWidth
               />
             )}

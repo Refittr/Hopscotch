@@ -406,6 +406,7 @@ export default function Home() {
     onRemoveFromShortlist: handleRemoveFromShortlist,
     onReorderShortlist: handleReorderShortlist,
     onStartRoute: handleStartRoute,
+    onHighlight: setHighlightedPoiId,
   };
 
   const mapArea = (
@@ -457,6 +458,7 @@ export default function Home() {
                 hasCity={selectedCity != null}
                 shortlistIds={shortlistIds}
                 onAddToShortlist={handleAddToShortlist}
+                onRemoveFromShortlist={handleRemoveFromShortlist}
                 onHighlight={setHighlightedPoiId}
               />
             </>
