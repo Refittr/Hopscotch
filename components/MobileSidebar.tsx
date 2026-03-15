@@ -60,7 +60,7 @@ export default function MobileSidebar(props: Props) {
               style={{ background: "var(--border)" }}
             >
               <svg width="13" height="13" viewBox="0 0 12 12" fill="none" style={{ color: "var(--muted)" }}>
-                <path d="M2 8L6 4L10 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
@@ -134,7 +134,7 @@ export default function MobileSidebar(props: Props) {
           </button>
 
           {/* Scrollable content */}
-          <div className="px-4" style={{ overflowY: "auto", height: "calc(50vh - 56px)", paddingBottom: "32px" }}>
+          <div className="px-4" style={{ overflowY: "auto", height: "calc(62vh - 56px)", paddingBottom: "96px" }}>
             <Sidebar {...props} hideHeader scrollable />
           </div>
         </div>

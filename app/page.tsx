@@ -466,10 +466,10 @@ export default function Home() {
       ) : (
         /* ── Mobile layout ── */
         <div className="flex flex-col h-screen" style={{ overflow: "clip" }}>
-          <div style={{ height: "50vh", flexShrink: 0, position: "relative", touchAction: "none" }}>
+          <div style={{ height: "38vh", flexShrink: 0, position: "relative", touchAction: "none" }}>
             {mapArea}
           </div>
-          <div style={{ height: "50vh" }}>
+          <div style={{ height: "62vh" }}>
             <MobileSidebar {...sidebarProps} />
           </div>
         </div>
