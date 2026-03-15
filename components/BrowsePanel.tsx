@@ -12,6 +12,7 @@ interface Props {
   shortlistIds: Set<string>;
   onAddToShortlist: (poi: POI) => void;
   onHighlight: (placeId: string | null) => void;
+  fullWidth?: boolean;
 }
 
 function SkeletonCard() {
@@ -38,6 +39,7 @@ export default function BrowsePanel({
   shortlistIds,
   onAddToShortlist,
   onHighlight,
+  fullWidth,
 }: Props) {
   const [search, setSearch] = useState("");
   const filtered = search.trim()
@@ -49,7 +51,7 @@ export default function BrowsePanel({
       className="flex flex-col h-full"
       style={{
         width: "100%",
-        maxWidth: "min(320px, 100%)",
+        maxWidth: fullWidth ? "100%" : "320px",
         background: "var(--background)",
         borderRight: "1px solid var(--border)",
       }}

@@ -35,9 +35,9 @@ export default function MobileSidebar(props: Props) {
     <>
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
-      {/* Expanded: fixed full-screen overlay */}
+      {/* Expanded: fills the 62vh panel, map stays visible above */}
       {expanded && (
-        <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "var(--sidebar-bg)" }}>
+        <div className="flex flex-col h-full" style={{ background: "var(--sidebar-bg)" }}>
           {/* Header */}
           <div
             className="flex items-center justify-between px-5 flex-shrink-0"
@@ -136,6 +136,7 @@ export default function MobileSidebar(props: Props) {
                 shortlistIds={shortlistIds}
                 onAddToShortlist={onAddToShortlist}
                 onHighlight={() => {}}
+                fullWidth
               />
             )}
           </div>
@@ -197,7 +198,7 @@ export default function MobileSidebar(props: Props) {
 
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto px-4 min-h-0">
-            <Sidebar {...props} hideHeader scrollable />
+            <Sidebar {...props} hideHeader scrollable onBrowse={() => { setTab("browse"); setExpanded(true); }} />
             <div className="pt-3 pb-2">
               <AdUnit slot="2261277039" format="horizontal" />
             </div>
