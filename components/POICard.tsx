@@ -23,11 +23,11 @@ function InfoTooltip({ poi }: { poi: POI }) {
         onMouseEnter={() => setVisible(true)}
         onMouseLeave={() => setVisible(false)}
         onClick={(e) => { e.stopPropagation(); setVisible((v) => !v); }}
-        className="w-5 h-5 flex items-center justify-center rounded-full transition-colors"
+        className="w-8 h-8 md:w-6 md:h-6 flex items-center justify-center rounded-full transition-colors"
         style={{
           background: "var(--border)",
           color: "var(--muted)",
-          fontSize: "10px",
+          fontSize: "11px",
           fontStyle: "italic",
           fontWeight: 700,
           fontFamily: "serif",
@@ -213,7 +213,7 @@ export default function POICard({ poi, highlighted, isShortlisted, onAdd, onHigh
 
       {/* Add / shortlisted button */}
       <button
-        className="add-btn w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+        className="add-btn w-10 h-10 md:w-7 md:h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
         style={{
           background: isShortlisted ? "var(--accent-secondary)" : "var(--accent-dim)",
           border: `1px solid ${isShortlisted ? "var(--accent-secondary)" : "var(--accent)"}`,
