@@ -1,6 +1,7 @@
 "use client";
 
-import { Map } from "@vis.gl/react-google-maps";
+import { useEffect } from "react";
+import { Map, useMap } from "@vis.gl/react-google-maps";
 import AdUnit from "./AdUnit";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
@@ -85,6 +86,15 @@ const DEFAULT_ZOOM = 2;
 const CITY_ZOOM = 13;
 
 
+function GestureEnabler() {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+    map.setOptions({ gestureHandling: "greedy", draggable: true });
+  }, [map]);
+  return null;
+}
+
 interface Props {
   selectedCity: SelectedCity | null;
   pois: POI[];
@@ -116,7 +126,7 @@ export default function MapArea({
 }: Props) {
   const inRouteMode = routeState !== null;
   return (
-    <div className="flex-1 relative" style={{ overflow: "clip", touchAction: "none" }}>
+    <div className="flex-1 relative" style={{ overflow: "clip" }}>
       <POIFetcher
         selectedCity={selectedCity}
         onPoisLoaded={onPoisLoaded}
@@ -131,6 +141,7 @@ export default function MapArea({
         styles={DARK_MAP_STYLES}
         style={{ width: "100%", height: "100%", touchAction: "none" }}
       >
+        <GestureEnabler />
         <MapMarkers
           pois={pois}
           visibleIds={visibleIds}
