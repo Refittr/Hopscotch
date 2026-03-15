@@ -84,7 +84,7 @@ export default function MobileSidebar(props: Props) {
             ))}
           </div>
 
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden" style={{ touchAction: "pan-y" }}>
             {tab === "controls" ? (
               <Sidebar {...props} hideHeader />
             ) : (
@@ -134,7 +134,7 @@ export default function MobileSidebar(props: Props) {
           </button>
 
           {/* Scrollable content */}
-          <div className="px-4" style={{ overflowY: "auto", height: "calc(62vh - 56px)", paddingBottom: "96px" }}>
+          <div className="px-4" style={{ overflowY: "auto", height: "calc(62vh - 56px)", paddingBottom: "96px", touchAction: "pan-y" }}>
             <Sidebar {...props} hideHeader scrollable />
           </div>
         </div>

@@ -42,6 +42,7 @@ body {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  touch-action: none;
 }
 
 /* POI card hover — hide add button until hover on precise-pointer devices (mouse/trackpad) */
