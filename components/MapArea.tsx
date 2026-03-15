@@ -175,12 +175,16 @@ export default function MapArea({
 
   const inRouteMode = routeState !== null;
   return (
-    <div ref={containerRef} className="absolute inset-0 md:relative md:flex-1" style={{ minHeight: 0 }}>
+    <div ref={containerRef} className="absolute inset-0 md:relative md:flex-1 flex flex-col" style={{ minHeight: 0 }}>
+      <div className="hidden md:block flex-shrink-0">
+        <AdUnit slot="2261277039" format="horizontal" />
+      </div>
       <POIFetcher
         selectedCity={selectedCity}
         onPoisLoaded={onPoisLoaded}
         onLoadingChange={onLoadingChange}
       />
+      <div className="flex-1 relative" style={{ minHeight: 0 }}>
       <Map
         key={selectedCity ? `${selectedCity.lat},${selectedCity.lng}` : "default"}
         defaultCenter={selectedCity ? { lat: selectedCity.lat, lng: selectedCity.lng } : DEFAULT_CENTER}
@@ -202,13 +206,6 @@ export default function MapArea({
         <RouteMapLayer routeState={routeState} shortlist={shortlist} hoveredHopOptionId={hoveredHopOptionId} suggestionPreviewPos={suggestionPreviewPos} />
       </Map>
 
-      {/* Top-right ad overlay */}
-      <div
-        className="absolute top-3 right-3 z-10 pointer-events-auto"
-        style={{ width: "300px", minHeight: "60px" }}
-      >
-        <AdUnit slot="2261277039" format="horizontal" />
-      </div>
 
       {/* Overlay when no city selected */}
       {!selectedCity && (
@@ -249,6 +246,7 @@ export default function MapArea({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

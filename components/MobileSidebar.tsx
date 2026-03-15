@@ -4,6 +4,7 @@ import { useState } from "react";
 import Sidebar from "./Sidebar";
 import BrowsePanel from "./BrowsePanel";
 import HelpModal from "./HelpModal";
+import AdUnit from "./AdUnit";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
 
@@ -197,7 +198,10 @@ export default function MobileSidebar(props: Props) {
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto px-4 min-h-0">
             <Sidebar {...props} hideHeader scrollable />
-            <div style={{ height: "40px", flexShrink: 0 }} />
+            <div className="pt-3 pb-2">
+              <AdUnit slot="2261277039" format="horizontal" />
+            </div>
+            <div style={{ height: "16px", flexShrink: 0 }} />
           </div>
         </div>
       )}
