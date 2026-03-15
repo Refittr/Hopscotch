@@ -166,6 +166,7 @@ export default function BrowsePanel({
                 index={i}
               />
             ))}
+            <div style={{ height: "40px" }} />
           </div>
         )}
       </div>

@@ -125,22 +125,25 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function HopOptionCard({
   option,
+  selected,
   onSelect,
   onSpotHover,
   onRemove,
 }: {
   option: HopOption;
+  selected?: boolean;
   onSelect: () => void;
   onSpotHover: (placeId: string | null) => void;
   onRemove: (placeId: string) => void;
 }) {
   const [hover, setHover] = useState(false);
+  const active = hover || selected;
   return (
     <div
       className="flex items-stretch rounded-xl overflow-hidden transition-all"
       style={{
-        border: `1px solid ${hover ? "#FF2D78" : "var(--border)"}`,
-        boxShadow: hover ? "0 0 12px rgba(255,45,120,0.12)" : "none",
+        border: `1px solid ${active ? "#FF2D78" : "var(--border)"}`,
+        boxShadow: active ? "0 0 12px rgba(255,45,120,0.12)" : "none",
         transition: "all 0.15s ease",
       }}
       onMouseEnter={() => { setHover(true); onSpotHover(option.poi.placeId); }}
@@ -150,7 +153,7 @@ function HopOptionCard({
       <button
         onClick={onSelect}
         className="flex-1 flex items-center gap-3 p-3 text-left transition-all"
-        style={{ background: hover ? "rgba(255,45,120,0.06)" : "var(--input-bg)" }}
+        style={{ background: active ? "rgba(255,45,120,0.06)" : "var(--input-bg)" }}
       >
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
@@ -184,7 +187,7 @@ function HopOptionCard({
       </button>
 
       {/* Info tooltip */}
-      <div className="flex items-center px-1.5" style={{ background: hover ? "rgba(255,45,120,0.06)" : "var(--input-bg)", transition: "background 0.15s ease" }}>
+      <div className="flex items-center px-1.5" style={{ background: active ? "rgba(255,45,120,0.06)" : "var(--input-bg)", transition: "background 0.15s ease" }}>
         <InfoTooltip poi={option.poi} />
       </div>
 
@@ -193,8 +196,8 @@ function HopOptionCard({
         onClick={() => onRemove(option.poi.placeId)}
         className="flex items-center justify-center px-2.5 transition-all flex-shrink-0"
         style={{
-          background: hover ? "rgba(255,45,120,0.06)" : "var(--input-bg)",
-          borderLeft: `1px solid ${hover ? "rgba(255,45,120,0.3)" : "var(--border)"}`,
+          background: active ? "rgba(255,45,120,0.06)" : "var(--input-bg)",
+          borderLeft: `1px solid ${active ? "rgba(255,45,120,0.3)" : "var(--border)"}`,
           color: "var(--muted)",
         }}
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#FF2D78"; }}
@@ -531,6 +534,21 @@ function HoppingView({
   onSpotHover: (placeId: string | null) => void;
   onSuggestionHover: (hovering: boolean) => void;
 }) {
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const pendingOption = state.hopOptions.find((o) => o.poi.placeId === pendingId) ?? null;
+
+  const handleCardClick = (opt: HopOption) => {
+    if (pendingId === opt.poi.placeId) {
+      // second tap → confirm
+      onHopSelect(opt);
+      setPendingId(null);
+    } else {
+      // first tap → preview
+      setPendingId(opt.poi.placeId);
+      onSpotHover(opt.poi.placeId);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {/* Completed timeline */}
@@ -587,12 +605,28 @@ function HoppingView({
               <HopOptionCard
                 key={opt.poi.placeId}
                 option={opt}
-                onSelect={() => onHopSelect(opt)}
+                selected={pendingId === opt.poi.placeId}
+                onSelect={() => handleCardClick(opt)}
                 onSpotHover={onSpotHover}
-                onRemove={onRemoveFromRoute}
+                onRemove={(id) => { if (pendingId === id) setPendingId(null); onRemoveFromRoute(id); }}
               />
             ))}
           </div>
+          {pendingOption && (
+            <button
+              onClick={() => { onHopSelect(pendingOption); setPendingId(null); }}
+              className="w-full py-3 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: "#FF2D78",
+                color: "#fff",
+                ...MONO,
+                letterSpacing: "0.04em",
+                boxShadow: "0 0 20px rgba(255,45,120,0.35)",
+              }}
+            >
+              Go to {pendingOption.poi.name} →
+            </button>
+          )}
         </>
       )}
 
