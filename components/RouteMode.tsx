@@ -5,6 +5,7 @@ import type { RouteState, HopOption, AISuggestion } from "@/types/route";
 import type { POI } from "@/types/poi";
 import { formatWalkTime, formatDistanceKm } from "@/lib/routeUtils";
 import { getCategoryEmoji } from "@/lib/placesCategories";
+import AdUnit from "./AdUnit";
 
 interface Props {
   routeState: RouteState;
@@ -656,6 +657,28 @@ function CompleteView({
 
       {/* Completed timeline */}
       <CompletedTimeline hops={state.completedHops} />
+
+      {/* Rectangle ad — user is idle here, good engagement spot */}
+      {process.env.NEXT_PUBLIC_ADSENSE_ID && process.env.NEXT_PUBLIC_ADSENSE_SLOT_ROUTE && (
+        <div
+          className="rounded-xl overflow-hidden flex-shrink-0"
+          style={{ border: "1px solid var(--border)" }}
+        >
+          <p
+            style={{
+              fontSize: "9px",
+              color: "var(--muted)",
+              letterSpacing: "0.12em",
+              fontFamily: "var(--font-dm-sans)",
+              padding: "6px 10px 2px",
+              opacity: 0.5,
+            }}
+          >
+            SPONSORED
+          </p>
+          <AdUnit slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ROUTE} format="rectangle" />
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex flex-col gap-2 mt-2">

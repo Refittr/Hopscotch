@@ -2,6 +2,7 @@
 
 import type { POI } from "@/types/poi";
 import POICard from "./POICard";
+import AdUnit from "./AdUnit";
 
 interface Props {
   pois: POI[];
@@ -27,6 +28,10 @@ function SkeletonCard() {
     </div>
   );
 }
+
+const BROWSE_AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_ID
+  ? process.env.NEXT_PUBLIC_ADSENSE_SLOT_BROWSE
+  : undefined;
 
 export default function BrowsePanel({
   pois,
@@ -118,15 +123,46 @@ export default function BrowsePanel({
 
         {!isLoading && pois.length > 0 && (
           <div className="flex flex-col gap-2">
-            {pois.map((poi) => (
-              <POICard
-                key={poi.placeId}
-                poi={poi}
-                highlighted={poi.placeId === highlightedPoiId}
-                isShortlisted={shortlistIds.has(poi.placeId)}
-                onAdd={onAddToShortlist}
-              />
-            ))}
+            {pois.flatMap((poi, index) => {
+              const card = (
+                <POICard
+                  key={poi.placeId}
+                  poi={poi}
+                  highlighted={poi.placeId === highlightedPoiId}
+                  isShortlisted={shortlistIds.has(poi.placeId)}
+                  onAdd={onAddToShortlist}
+                />
+              );
+              // Insert an ad card after every 8th item (not after the last)
+              if (BROWSE_AD_SLOT && (index + 1) % 8 === 0 && index < pois.length - 1) {
+                return [
+                  card,
+                  <div
+                    key={`ad-${index}`}
+                    className="rounded-lg overflow-hidden flex-shrink-0"
+                    style={{
+                      background: "var(--input-bg)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "9px",
+                        color: "var(--muted)",
+                        letterSpacing: "0.12em",
+                        fontFamily: "var(--font-dm-sans)",
+                        padding: "6px 10px 2px",
+                        opacity: 0.5,
+                      }}
+                    >
+                      SPONSORED
+                    </p>
+                    <AdUnit slot={BROWSE_AD_SLOT} format="horizontal" />
+                  </div>,
+                ];
+              }
+              return [card];
+            })}
           </div>
         )}
       </div>
