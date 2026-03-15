@@ -453,7 +453,7 @@ export default function Home() {
 
       {/* ── Mobile layout — map on top, sidebar below, no fixed/absolute overlap ── */}
       <div className="md:hidden flex flex-col h-screen" style={{ overflow: "clip" }}>
-        <div className="relative" style={{ height: "50vh" }}>
+        <div style={{ height: "50vh", flexShrink: 0, position: "relative", touchAction: "none" }}>
           <MapArea
             selectedCity={selectedCity}
             pois={pois}
