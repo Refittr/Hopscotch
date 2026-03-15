@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Map, useMap } from "@vis.gl/react-google-maps";
 import AdUnit from "./AdUnit";
 import type { SelectedCity } from "@/app/page";
@@ -92,16 +92,33 @@ function GestureEnabler() {
     if (!map) return;
     map.setOptions({ gestureHandling: "greedy", draggable: true });
     google.maps.event.trigger(map, "resize");
-    const t = setTimeout(() => {
-      map.setOptions({ gestureHandling: "greedy", draggable: true });
-      google.maps.event.trigger(map, "resize");
-      console.log("[MAP DIAG] gestureHandling:", map.get("gestureHandling"));
-      console.log("[MAP DIAG] container size:", map.getDiv().clientWidth, "x", map.getDiv().clientHeight);
-      console.log("[MAP DIAG] touch-action on gm-style:", (map.getDiv().querySelector(".gm-style") as HTMLElement)?.style.touchAction);
-      map.addListener("dragstart", () => console.log("[MAP DIAG] dragstart fired"));
-      map.addListener("drag", () => console.log("[MAP DIAG] drag fired"));
-    }, 300);
-    return () => clearTimeout(t);
+
+    const div = map.getDiv();
+    let lastX = 0;
+    let lastY = 0;
+
+    const onStart = (e: TouchEvent) => {
+      e.preventDefault();
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    };
+
+    const onMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (!e.touches.length) return;
+      const dx = lastX - e.touches[0].clientX;
+      const dy = lastY - e.touches[0].clientY;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+      map.panBy(dx, dy);
+    };
+
+    div.addEventListener("touchstart", onStart, { passive: false });
+    div.addEventListener("touchmove", onMove, { passive: false });
+    return () => {
+      div.removeEventListener("touchstart", onStart);
+      div.removeEventListener("touchmove", onMove);
+    };
   }, [map]);
   return null;
 }
@@ -135,38 +152,9 @@ export default function MapArea({
   hoveredHopOptionId,
   suggestionPreviewPos,
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const fire = (type: string, touch: Touch) => {
-      const target = document.elementFromPoint(touch.clientX, touch.clientY) ?? el;
-      target.dispatchEvent(new MouseEvent(type, {
-        bubbles: true, cancelable: true,
-        clientX: touch.clientX, clientY: touch.clientY,
-        screenX: touch.screenX, screenY: touch.screenY,
-        button: 0, buttons: type === "mouseup" ? 0 : 1,
-      }));
-    };
-
-    const onStart = (e: TouchEvent) => { e.preventDefault(); fire("mousedown", e.touches[0]); };
-    const onMove  = (e: TouchEvent) => { e.preventDefault(); fire("mousemove", e.touches[0]); };
-    const onEnd   = (e: TouchEvent) => { fire("mouseup", e.changedTouches[0]); };
-
-    el.addEventListener("touchstart", onStart, { passive: false });
-    el.addEventListener("touchmove",  onMove,  { passive: false });
-    el.addEventListener("touchend",   onEnd,   { passive: false });
-    return () => {
-      el.removeEventListener("touchstart", onStart);
-      el.removeEventListener("touchmove",  onMove);
-      el.removeEventListener("touchend",   onEnd);
-    };
-  }, []);
-
   const inRouteMode = routeState !== null;
   return (
-    <div ref={containerRef} className="absolute inset-0 md:relative md:flex-1" style={{ minHeight: 0 }}>
+    <div className="absolute inset-0 md:relative md:flex-1" style={{ minHeight: 0 }}>
       <POIFetcher
         selectedCity={selectedCity}
         onPoisLoaded={onPoisLoaded}
