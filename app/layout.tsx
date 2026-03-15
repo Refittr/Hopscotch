@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Pacifico, DM_Sans } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 
 const pacifico = Pacifico({
@@ -20,8 +19,6 @@ export const metadata: Metadata = {
   description: "Explore cities, discover spots, build your route.",
 };
 
-const adSenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,16 +26,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1534197495002044"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className={`${pacifico.variable} ${dmSans.variable}`}>
         {children}
-        {adSenseId && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adSenseId}`}
-            crossOrigin="anonymous"
-            strategy="afterInteractive"
-          />
-        )}
       </body>
     </html>
   );
