@@ -66,22 +66,61 @@ export default function MobileSidebar(props: Props) {
           </div>
 
           {/* Tabs */}
-          <div className="flex flex-shrink-0 mx-4 mt-3 mb-2 rounded-lg overflow-hidden" style={{ background: "var(--input-bg)", border: "1px solid var(--border)" }}>
-            {(["controls", "browse"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className="flex-1 py-2 text-xs font-medium capitalize transition-all"
-                style={{
-                  background: tab === t ? "var(--accent-dim)" : "transparent",
-                  color: tab === t ? "var(--accent)" : "var(--muted)",
-                  borderBottom: tab === t ? "1px solid var(--accent)" : "1px solid transparent",
+          <div className="flex flex-shrink-0 gap-2 mx-4 mt-3 mb-2">
+            <button
+              onClick={() => setTab("browse")}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all"
+              style={{
+                background: tab === "browse" ? "var(--accent-dim)" : "var(--input-bg)",
+                border: tab === "browse" ? "1px solid var(--accent)" : "1px solid var(--border)",
+                boxShadow: tab === "browse" ? "0 0 12px rgba(0,240,255,0.15)" : "none",
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ color: tab === "browse" ? "var(--accent)" : "var(--muted)", flexShrink: 0 }}>
+                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8"/>
+                <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              </svg>
+              <span className="text-sm font-semibold" style={{ color: tab === "browse" ? "var(--accent)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
+                Browse
+              </span>
+              {!isLoading && filteredPois.length > 0 && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full" style={{
+                  background: tab === "browse" ? "rgba(0,240,255,0.15)" : "var(--border)",
+                  color: tab === "browse" ? "var(--accent)" : "var(--muted)",
                   fontFamily: "var(--font-dm-sans)",
-                }}
-              >
-                {t === "controls" ? "My List" : "Browse"}
-              </button>
-            ))}
+                }}>
+                  {filteredPois.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setTab("controls")}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all"
+              style={{
+                background: tab === "controls" ? "rgba(255,45,120,0.1)" : "var(--input-bg)",
+                border: tab === "controls" ? "1px solid var(--accent-secondary)" : "1px solid var(--border)",
+                boxShadow: tab === "controls" ? "0 0 12px rgba(255,45,120,0.15)" : "none",
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ color: tab === "controls" ? "var(--accent-secondary)" : "var(--muted)", flexShrink: 0 }}>
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="1.8"/>
+                <path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              </svg>
+              <span className="text-sm font-semibold" style={{ color: tab === "controls" ? "var(--accent-secondary)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
+                My List
+              </span>
+              {props.shortlist.length > 0 && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full" style={{
+                  background: tab === "controls" ? "rgba(255,45,120,0.2)" : "var(--border)",
+                  color: tab === "controls" ? "var(--accent-secondary)" : "var(--muted)",
+                  fontFamily: "var(--font-dm-sans)",
+                }}>
+                  {props.shortlist.length}
+                </span>
+              )}
+            </button>
           </div>
 
           <div className="flex-1 overflow-hidden" style={{ }}>
@@ -109,7 +148,10 @@ export default function MobileSidebar(props: Props) {
           <button
             className="flex items-center justify-between px-4 w-full flex-shrink-0"
             style={{ touchAction: "manipulation", paddingTop: "12px", paddingBottom: "12px", borderBottom: "1px solid var(--border)" }}
-            onClick={() => setExpanded(true)}
+            onClick={() => {
+              if (filteredPois.length > 0) setTab("browse");
+              setExpanded(true);
+            }}
           >
             <div className="flex items-center gap-3 min-w-0">
               <span style={{ fontFamily: "var(--font-display)", fontSize: "20px", color: "var(--accent)", flexShrink: 0, textShadow: "0 0 16px rgba(0,240,255,0.3)" }}>
