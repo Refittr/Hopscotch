@@ -402,44 +402,58 @@ export default function Home() {
 
   return (
     <APIProvider apiKey={apiKey} libraries={["places"]}>
-      <div className="flex h-screen" style={{ overflow: "clip" }}>
-        {/* Desktop panels */}
-        <div className="hidden md:flex">
-          {routeState ? (
-            <RouteMode
-              routeState={routeState}
-              shortlist={shortlist}
-              browsePOIs={filteredPois}
-              onPickStart={handlePickStart}
-              onHopSelect={handleHopSelect}
-              onAddAISuggestion={handleAddAISuggestion}
-              onUndoLastHop={handleUndoLastHop}
-              onRemoveFromRoute={handleRemoveFromRoute}
-              onFinishRoute={handleFinishRoute}
-              onStartOver={handleStartOver}
-              onBackToPlanning={handleBackToPlanning}
-              onSpotHover={setHoveredHopOptionId}
-              onSuggestionHover={handleSuggestionHover}
-              onToast={pushToast}
+      {/* ── Desktop layout ── */}
+      <div className="hidden md:flex h-screen" style={{ overflow: "clip" }}>
+        {routeState ? (
+          <RouteMode
+            routeState={routeState}
+            shortlist={shortlist}
+            browsePOIs={filteredPois}
+            onPickStart={handlePickStart}
+            onHopSelect={handleHopSelect}
+            onAddAISuggestion={handleAddAISuggestion}
+            onUndoLastHop={handleUndoLastHop}
+            onRemoveFromRoute={handleRemoveFromRoute}
+            onFinishRoute={handleFinishRoute}
+            onStartOver={handleStartOver}
+            onBackToPlanning={handleBackToPlanning}
+            onSpotHover={setHoveredHopOptionId}
+            onSuggestionHover={handleSuggestionHover}
+            onToast={pushToast}
+          />
+        ) : (
+          <>
+            <Sidebar {...sidebarProps} />
+            <BrowsePanel
+              pois={filteredPois}
+              isLoading={isLoading}
+              highlightedPoiId={highlightedPoiId}
+              hasCity={selectedCity != null}
+              shortlistIds={shortlistIds}
+              onAddToShortlist={handleAddToShortlist}
+              onHighlight={setHighlightedPoiId}
             />
-          ) : (
-            <>
-              <Sidebar {...sidebarProps} />
-              <BrowsePanel
-                pois={filteredPois}
-                isLoading={isLoading}
-                highlightedPoiId={highlightedPoiId}
-                hasCity={selectedCity != null}
-                shortlistIds={shortlistIds}
-                onAddToShortlist={handleAddToShortlist}
-                onHighlight={setHighlightedPoiId}
-              />
-            </>
-          )}
-        </div>
+          </>
+        )}
+        <MapArea
+          selectedCity={selectedCity}
+          pois={pois}
+          visibleIds={visibleIds}
+          shortlistIds={shortlistIds}
+          highlightedPoiId={highlightedPoiId}
+          onMarkerClick={setHighlightedPoiId}
+          onPoisLoaded={handlePoisLoaded}
+          onLoadingChange={handleLoadingChange}
+          routeState={routeState}
+          shortlist={shortlist}
+          hoveredHopOptionId={hoveredHopOptionId}
+          suggestionPreviewPos={suggestionPreviewPos}
+        />
+      </div>
 
-        {/* Map + mobile sidebar — wrapped so sidebar is absolute not fixed */}
-        <div className="flex-1 relative md:contents">
+      {/* ── Mobile layout — map on top, sidebar below, no fixed/absolute overlap ── */}
+      <div className="md:hidden flex flex-col h-screen" style={{ overflow: "clip" }}>
+        <div className="relative" style={{ height: "50vh" }}>
           <MapArea
             selectedCity={selectedCity}
             pois={pois}
@@ -454,6 +468,8 @@ export default function Home() {
             hoveredHopOptionId={hoveredHopOptionId}
             suggestionPreviewPos={suggestionPreviewPos}
           />
+        </div>
+        <div style={{ height: "50vh" }}>
           <MobileSidebar {...sidebarProps} />
         </div>
       </div>

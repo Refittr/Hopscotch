@@ -127,7 +127,7 @@ export default function MapArea({
 }: Props) {
   const inRouteMode = routeState !== null;
   return (
-    <div className="absolute inset-0 md:relative md:flex-1">
+    <div className="absolute inset-0 md:relative md:flex-1" style={{ minHeight: 0 }}>
       <POIFetcher
         selectedCity={selectedCity}
         onPoisLoaded={onPoisLoaded}
