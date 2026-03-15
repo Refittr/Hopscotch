@@ -30,6 +30,7 @@ export default function Home() {
   const [highlightedPoiId, setHighlightedPoiId] = useState<string | null>(null);
   const [shortlist, setShortlist] = useState<POI[]>([]);
   const [showMaxToast, setShowMaxToast] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // ── Route state ─────────────────────────────────────────────────────────
   const [routeState, setRouteState] = useState<RouteState | null>(null);
@@ -352,6 +353,20 @@ export default function Home() {
     aiCallKeyRef.current = "";
   }, []);
 
+  const handleFinishRoute = useCallback(() => {
+    if (!routeState || routeState.phase !== "hopping") return;
+    const { completedHops } = routeState;
+    const totalWalk = completedHops.reduce((s, h) => s + h.walkMinutes, 0);
+    const totalDist = completedHops.reduce((s, h) => s + h.distanceKm, 0);
+    setRouteState({
+      phase: "complete",
+      cityName: routeState.cityName,
+      completedHops,
+      totalWalkMinutes: totalWalk,
+      totalDistanceKm: totalDist,
+    });
+  }, [routeState]);
+
   const handleStartOver = useCallback(() => {
     aiCallKeyRef.current = "";
     setRouteState({ phase: "picking_start" });
@@ -394,10 +409,12 @@ export default function Home() {
               onAddAISuggestion={handleAddAISuggestion}
               onUndoLastHop={handleUndoLastHop}
               onRemoveFromRoute={handleRemoveFromRoute}
+              onFinishRoute={handleFinishRoute}
               onStartOver={handleStartOver}
               onBackToPlanning={handleBackToPlanning}
               onSpotHover={setHoveredHopOptionId}
               onSuggestionHover={handleSuggestionHover}
+              onToast={setToastMsg}
             />
           ) : (
             <>
@@ -409,6 +426,7 @@ export default function Home() {
                 hasCity={selectedCity != null}
                 shortlistIds={shortlistIds}
                 onAddToShortlist={handleAddToShortlist}
+                onHighlight={setHighlightedPoiId}
               />
             </>
           )}
@@ -438,6 +456,11 @@ export default function Home() {
         message="Max 15 spots per route"
         visible={showMaxToast}
         onDone={() => setShowMaxToast(false)}
+      />
+      <Toast
+        message={toastMsg ?? ""}
+        visible={toastMsg !== null}
+        onDone={() => setToastMsg(null)}
       />
     </APIProvider>
   );

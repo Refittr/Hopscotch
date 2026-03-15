@@ -25,6 +25,7 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
   const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   const autocompleteRef = useRef<google.maps.places.AutocompleteService | null>(null);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
+  const isSelectingRef = useRef(false);
 
   // Initialise services once library is loaded
   useEffect(() => {
@@ -36,6 +37,7 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
 
   // Fetch suggestions as user types
   useEffect(() => {
+    if (isSelectingRef.current) return;
     if (!autocompleteRef.current || query.length < 2) {
       setSuggestions([]);
       setOpen(false);
@@ -83,9 +85,16 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
   const handleSelect = (suggestion: Suggestion) => {
     if (!geocoderRef.current) return;
 
+    // Suppress autocomplete re-trigger while we update query
+    isSelectingRef.current = true;
+    setOpen(false);
+    setSuggestions([]);
+    setQuery(suggestion.mainText);
+
     geocoderRef.current.geocode(
       { placeId: suggestion.placeId },
       (results, status) => {
+        isSelectingRef.current = false;
         if (status !== google.maps.GeocoderStatus.OK || !results?.[0]) return;
         const loc = results[0].geometry.location;
         onCitySelect({
@@ -93,8 +102,6 @@ export default function CitySearch({ selectedCity, onCitySelect }: Props) {
           lat: loc.lat(),
           lng: loc.lng(),
         });
-        setQuery(suggestion.mainText);
-        setOpen(false);
         // Refresh session token after billable call
         if (placesLib) {
           sessionTokenRef.current = new placesLib.AutocompleteSessionToken();

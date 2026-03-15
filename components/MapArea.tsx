@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Map, useMap } from "@vis.gl/react-google-maps";
+import { Map } from "@vis.gl/react-google-maps";
+import AdUnit from "./AdUnit";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
 import POIFetcher from "./POIFetcher";
@@ -84,31 +84,6 @@ const DEFAULT_CENTER = { lat: 20, lng: 0 };
 const DEFAULT_ZOOM = 2;
 const CITY_ZOOM = 13;
 
-function MapController({ selectedCity }: { selectedCity: SelectedCity | null }) {
-  const map = useMap();
-  const prevCityRef = useRef<SelectedCity | null>(null);
-
-  useEffect(() => {
-    if (!map) return;
-
-    if (selectedCity) {
-      map.panTo({ lat: selectedCity.lat, lng: selectedCity.lng });
-      const currentZoom = map.getZoom() ?? DEFAULT_ZOOM;
-      if (currentZoom < 8) {
-        setTimeout(() => map.setZoom(CITY_ZOOM), 300);
-      } else {
-        map.setZoom(CITY_ZOOM);
-      }
-    } else if (prevCityRef.current && !selectedCity) {
-      map.setZoom(DEFAULT_ZOOM);
-      setTimeout(() => map.panTo(DEFAULT_CENTER), 200);
-    }
-
-    prevCityRef.current = selectedCity;
-  }, [map, selectedCity]);
-
-  return null;
-}
 
 interface Props {
   selectedCity: SelectedCity | null;
@@ -142,20 +117,20 @@ export default function MapArea({
   const inRouteMode = routeState !== null;
   return (
     <div className="flex-1 relative overflow-hidden">
+      <POIFetcher
+        selectedCity={selectedCity}
+        onPoisLoaded={onPoisLoaded}
+        onLoadingChange={onLoadingChange}
+      />
       <Map
-        defaultCenter={DEFAULT_CENTER}
-        defaultZoom={DEFAULT_ZOOM}
+        key={selectedCity ? `${selectedCity.lat},${selectedCity.lng}` : "default"}
+        defaultCenter={selectedCity ? { lat: selectedCity.lat, lng: selectedCity.lng } : DEFAULT_CENTER}
+        defaultZoom={selectedCity ? CITY_ZOOM : DEFAULT_ZOOM}
         disableDefaultUI
         gestureHandling="greedy"
         styles={DARK_MAP_STYLES}
         style={{ width: "100%", height: "100%" }}
       >
-        <MapController selectedCity={selectedCity} />
-        <POIFetcher
-          selectedCity={selectedCity}
-          onPoisLoaded={onPoisLoaded}
-          onLoadingChange={onLoadingChange}
-        />
         <MapMarkers
           pois={pois}
           visibleIds={visibleIds}
@@ -166,6 +141,14 @@ export default function MapArea({
         />
         <RouteMapLayer routeState={routeState} shortlist={shortlist} hoveredHopOptionId={hoveredHopOptionId} suggestionPreviewPos={suggestionPreviewPos} />
       </Map>
+
+      {/* Top-right ad overlay */}
+      <div
+        className="absolute top-3 right-3 z-10 pointer-events-auto"
+        style={{ width: "300px", minHeight: "60px" }}
+      >
+        <AdUnit slot="2261277039" format="horizontal" />
+      </div>
 
       {/* Overlay when no city selected */}
       {!selectedCity && (

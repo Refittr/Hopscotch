@@ -4,14 +4,121 @@ import { useEffect, useRef, useState } from "react";
 import type { POI } from "@/types/poi";
 import { getCategoryEmoji } from "@/lib/placesCategories";
 
+const SKIP_TYPES = new Set([
+  "point_of_interest", "establishment", "food", "store", "premise",
+  "political", "locality", "geocode", "route",
+]);
+
+function InfoTooltip({ poi }: { poi: POI }) {
+  const [visible, setVisible] = useState(false);
+  const tags = poi.types
+    .filter((t) => !SKIP_TYPES.has(t))
+    .slice(0, 4)
+    .map((t) => t.replace(/_/g, " "));
+  const stars = poi.rating ? Math.round(poi.rating) : 0;
+
+  return (
+    <div className="relative flex-shrink-0" style={{ lineHeight: 0 }}>
+      <button
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onClick={(e) => { e.stopPropagation(); setVisible((v) => !v); }}
+        className="w-5 h-5 flex items-center justify-center rounded-full transition-colors"
+        style={{
+          background: "var(--border)",
+          color: "var(--muted)",
+          fontSize: "10px",
+          fontStyle: "italic",
+          fontWeight: 700,
+          fontFamily: "serif",
+        }}
+        aria-label="Info"
+      >
+        i
+      </button>
+      {visible && (
+        <div
+          className="absolute z-50 rounded-xl"
+          style={{
+            bottom: "calc(100% + 8px)",
+            right: 0,
+            width: "200px",
+            background: "#1a1714",
+            border: "1px solid var(--border)",
+            boxShadow: "0 12px 32px rgba(0,0,0,0.7)",
+            overflow: "hidden",
+          }}
+        >
+          {/* Header strip */}
+          <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--border)", background: "var(--input-bg)" }}>
+            <p className="text-xs font-semibold truncate" style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}>
+              {getCategoryEmoji(poi.category)} {poi.name}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--accent)", fontFamily: "var(--font-dm-sans)", letterSpacing: "0.1em", textTransform: "uppercase", fontSize: "9px" }}>
+              {poi.category}
+            </p>
+          </div>
+
+          <div className="px-3 py-2.5 flex flex-col gap-2">
+            {/* Rating */}
+            {poi.rating != null && (
+              <div className="flex items-center gap-1.5">
+                <div className="flex gap-0.5">
+                  {[1,2,3,4,5].map((n) => (
+                    <span key={n} style={{ color: n <= stars ? "#f59e0b" : "var(--border)", fontSize: "10px" }}>★</span>
+                  ))}
+                </div>
+                <span className="text-xs font-semibold" style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}>
+                  {poi.rating.toFixed(1)}
+                </span>
+                {poi.ratingsCount != null && (
+                  <span className="text-xs" style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
+                    ({poi.ratingsCount >= 1000 ? `${(poi.ratingsCount / 1000).toFixed(1)}k` : poi.ratingsCount})
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Open status */}
+            {poi.isOpen != null && (
+              <div className="flex items-center gap-1.5">
+                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: poi.isOpen ? "#4ade80" : "#f87171", flexShrink: 0 }} />
+                <span className="text-xs" style={{ color: poi.isOpen ? "#4ade80" : "#f87171", fontFamily: "var(--font-dm-sans)" }}>
+                  {poi.isOpen ? "Open now" : "Currently closed"}
+                </span>
+              </div>
+            )}
+
+            {/* Tags */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-1.5 py-0.5 rounded text-xs capitalize"
+                    style={{ background: "var(--border)", color: "var(--muted)", fontFamily: "var(--font-dm-sans)", fontSize: "9px" }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Props {
   poi: POI;
   highlighted: boolean;
   isShortlisted: boolean;
   onAdd: (poi: POI) => void;
+  onHighlight?: (placeId: string | null) => void;
 }
 
-export default function POICard({ poi, highlighted, isShortlisted, onAdd }: Props) {
+export default function POICard({ poi, highlighted, isShortlisted, onAdd, onHighlight }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [imgError, setImgError] = useState(false);
 
@@ -25,6 +132,8 @@ export default function POICard({ poi, highlighted, isShortlisted, onAdd }: Prop
     <div
       ref={ref}
       className="poi-card flex items-center gap-3 p-2.5 rounded-lg cursor-pointer"
+      onMouseEnter={() => onHighlight?.(poi.placeId)}
+      onMouseLeave={() => onHighlight?.(null)}
       style={{
         background: highlighted ? "var(--accent-dim)" : "var(--input-bg)",
         border: `1px solid ${highlighted ? "var(--accent)" : "var(--border)"}`,
@@ -85,6 +194,8 @@ export default function POICard({ poi, highlighted, isShortlisted, onAdd }: Prop
           </div>
         )}
       </div>
+
+      <InfoTooltip poi={poi} />
 
       {/* Add / shortlisted button */}
       <button

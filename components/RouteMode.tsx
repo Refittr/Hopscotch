@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { RouteState, HopOption, AISuggestion } from "@/types/route";
+import type { RouteState, HopOption, AISuggestion, CompletedHop } from "@/types/route";
 import type { POI } from "@/types/poi";
 import { formatWalkTime, formatDistanceKm } from "@/lib/routeUtils";
 import { getCategoryEmoji } from "@/lib/placesCategories";
-import AdUnit from "./AdUnit";
 
 interface Props {
   routeState: RouteState;
@@ -16,10 +15,12 @@ interface Props {
   onAddAISuggestion: (name: string) => void;
   onUndoLastHop: () => void;
   onRemoveFromRoute: (placeId: string) => void;
+  onFinishRoute: () => void;
   onStartOver: () => void;
   onBackToPlanning: () => void;
   onSpotHover: (placeId: string | null) => void;
   onSuggestionHover: (hovering: boolean) => void;
+  onToast: (msg: string) => void;
 }
 
 // ── Shared styles ────────────────────────────────────────────────────────────
@@ -517,6 +518,7 @@ function HoppingView({
   onAddAISuggestion,
   onUndoLastHop,
   onRemoveFromRoute,
+  onFinishRoute,
   onSpotHover,
   onSuggestionHover,
 }: {
@@ -525,6 +527,7 @@ function HoppingView({
   onAddAISuggestion: (name: string) => void;
   onUndoLastHop: () => void;
   onRemoveFromRoute: (placeId: string) => void;
+  onFinishRoute: () => void;
   onSpotHover: (placeId: string | null) => void;
   onSuggestionHover: (hovering: boolean) => void;
 }) {
@@ -600,18 +603,209 @@ function HoppingView({
         onAdd={onAddAISuggestion}
         onHover={onSuggestionHover}
       />
+
+      {/* Finish early */}
+      {state.completedHops.length > 0 && (
+        <button
+          onClick={onFinishRoute}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all"
+          style={{
+            background: "var(--accent-dim)",
+            border: "1px solid var(--accent)",
+            color: "var(--accent)",
+            fontFamily: "var(--font-dm-sans)",
+            letterSpacing: "0.06em",
+          }}
+        >
+          Finish Route
+        </button>
+      )}
     </div>
   );
 }
+
+// ── Share helpers ─────────────────────────────────────────────────────────────
+
+function stopsFromHops(hops: CompletedHop[]) {
+  if (hops.length === 0) return [];
+  const stops = [
+    { name: hops[0].from.name, lat: hops[0].from.lat, lng: hops[0].from.lng, order: 0 },
+    ...hops.map((h, i) => ({
+      name: h.to.name,
+      lat: h.to.lat,
+      lng: h.to.lng,
+      order: i + 1,
+      walkMinutes: h.walkMinutes,
+      distanceKm: h.distanceKm,
+    })),
+  ];
+  return stops;
+}
+
+function googleMapsUrl(stops: ReturnType<typeof stopsFromHops>): string {
+  return (
+    "https://www.google.com/maps/dir/" +
+    stops.map((s) => `${s.lat},${s.lng}`).join("/") +
+    "/?travelmode=walking"
+  );
+}
+
+function copyText(hops: CompletedHop[], cityName: string): string {
+  const lines: string[] = [`🗺 Hopscotch route — ${cityName}`];
+  const stops = stopsFromHops(hops);
+  stops.forEach((stop, i) => {
+    lines.push(`${i + 1}. ${stop.name}${i === 0 ? " (start)" : ""}`);
+    if (i < stops.length - 1 && hops[i]) {
+      lines.push(`   ↓ ${hops[i].walkMinutes} min walk`);
+    }
+  });
+  const total = hops.reduce((s, h) => s + h.walkMinutes, 0);
+  lines.push(`Total: ~${total} min walking`);
+  return lines.join("\n");
+}
+
+async function shareRoute(
+  hops: CompletedHop[],
+  cityName: string,
+  onToast: (msg: string) => void
+) {
+  const stops = stopsFromHops(hops);
+  try {
+    const res = await fetch("/api/share", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cityName, stops }),
+    });
+    const { shortCode, error } = await res.json();
+    if (error) throw new Error(error);
+    const url = `${window.location.origin}/r/${shortCode}`;
+    await navigator.clipboard.writeText(url);
+    onToast("Link copied!");
+  } catch {
+    onToast("Could not create share link");
+  }
+}
+
+// ── ShareButtons ──────────────────────────────────────────────────────────────
+
+function ShareButtons({
+  hops,
+  cityName,
+  onToast,
+  compact = false,
+}: {
+  hops: CompletedHop[];
+  cityName: string;
+  onToast: (msg: string) => void;
+  compact?: boolean;
+}) {
+  const stops = stopsFromHops(hops);
+  const mapsUrl = googleMapsUrl(stops);
+
+  const btnStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: compact ? "0" : "6px",
+    padding: compact ? "6px 8px" : "8px 14px",
+    borderRadius: "10px",
+    border: "1px solid var(--border)",
+    background: "var(--input-bg)",
+    color: "var(--muted)",
+    cursor: "pointer",
+    fontSize: compact ? "11px" : "12px",
+    fontFamily: "var(--font-dm-sans)",
+    transition: "border-color 0.15s, color 0.15s",
+    whiteSpace: "nowrap" as const,
+  };
+
+  return (
+    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" as const }}>
+      {/* Share link */}
+      <button
+        title="Copy share link"
+        style={btnStyle}
+        onClick={() => shareRoute(hops, cityName, onToast)}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+          (e.currentTarget as HTMLElement).style.color = "var(--accent)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+          (e.currentTarget as HTMLElement).style.color = "var(--muted)";
+        }}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+        {!compact && <span>Share link</span>}
+      </button>
+
+      {/* Google Maps */}
+      <a
+        href={mapsUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Open in Google Maps"
+        style={{ ...btnStyle, textDecoration: "none" }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLElement).style.borderColor = "#4285F4";
+          (e.currentTarget as HTMLElement).style.color = "#4285F4";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+          (e.currentTarget as HTMLElement).style.color = "var(--muted)";
+        }}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+        </svg>
+        {!compact && <span>Google Maps</span>}
+      </a>
+
+      {/* Copy text */}
+      <button
+        title="Copy route as text"
+        style={btnStyle}
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(copyText(hops, cityName));
+            onToast("Route copied!");
+          } catch {
+            onToast("Could not copy");
+          }
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+          (e.currentTarget as HTMLElement).style.color = "var(--accent)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+          (e.currentTarget as HTMLElement).style.color = "var(--muted)";
+        }}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        {!compact && <span>Copy list</span>}
+      </button>
+    </div>
+  );
+}
+
+// ── CompleteView ───────────────────────────────────────────────────────────────
 
 function CompleteView({
   state,
   onStartOver,
   onBackToPlanning,
+  onToast,
 }: {
   state: Extract<RouteState, { phase: "complete" }>;
   onStartOver: () => void;
   onBackToPlanning: () => void;
+  onToast: (msg: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -658,27 +852,16 @@ function CompleteView({
       {/* Completed timeline */}
       <CompletedTimeline hops={state.completedHops} />
 
-      {/* Rectangle ad — user is idle here, good engagement spot */}
-      {process.env.NEXT_PUBLIC_ADSENSE_ID && process.env.NEXT_PUBLIC_ADSENSE_SLOT_ROUTE && (
-        <div
-          className="rounded-xl overflow-hidden flex-shrink-0"
-          style={{ border: "1px solid var(--border)" }}
-        >
-          <p
-            style={{
-              fontSize: "9px",
-              color: "var(--muted)",
-              letterSpacing: "0.12em",
-              fontFamily: "var(--font-dm-sans)",
-              padding: "6px 10px 2px",
-              opacity: 0.5,
-            }}
-          >
-            SPONSORED
-          </p>
-          <AdUnit slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ROUTE} format="rectangle" />
-        </div>
-      )}
+      {/* Share bar */}
+      <div
+        className="rounded-xl p-4 flex flex-col gap-3"
+        style={{ background: "var(--input-bg)", border: "1px solid var(--border)" }}
+      >
+        <p className="text-xs font-semibold" style={{ color: "var(--foreground)", ...MONO, letterSpacing: "0.1em" }}>
+          SAVE &amp; SHARE
+        </p>
+        <ShareButtons hops={state.completedHops} cityName={state.cityName} onToast={onToast} />
+      </div>
 
       {/* Actions */}
       <div className="flex flex-col gap-2 mt-2">
@@ -722,10 +905,12 @@ export default function RouteMode({
   onAddAISuggestion,
   onUndoLastHop,
   onRemoveFromRoute,
+  onFinishRoute,
   onStartOver,
   onBackToPlanning,
   onSpotHover,
   onSuggestionHover,
+  onToast,
 }: Props) {
   const cityName =
     routeState.phase !== "picking_start" ? routeState.cityName : null;
@@ -762,6 +947,15 @@ export default function RouteMode({
           Back to planning
         </button>
         <div className="flex items-center gap-2">
+          {(routeState.phase === "hopping" || routeState.phase === "complete") &&
+            routeState.completedHops.length > 0 && (
+              <ShareButtons
+                hops={routeState.completedHops}
+                cityName={routeState.cityName}
+                onToast={onToast}
+                compact
+              />
+            )}
           {cityName && (
             <span
               className="text-xs px-2 py-0.5 rounded-full"
@@ -817,6 +1011,7 @@ export default function RouteMode({
             onAddAISuggestion={onAddAISuggestion}
             onUndoLastHop={onUndoLastHop}
             onRemoveFromRoute={onRemoveFromRoute}
+            onFinishRoute={onFinishRoute}
             onSpotHover={onSpotHover}
             onSuggestionHover={onSuggestionHover}
           />
@@ -826,6 +1021,7 @@ export default function RouteMode({
             state={routeState}
             onStartOver={onStartOver}
             onBackToPlanning={onBackToPlanning}
+            onToast={onToast}
           />
         )}
       </div>

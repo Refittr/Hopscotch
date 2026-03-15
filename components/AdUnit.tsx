@@ -9,7 +9,7 @@ declare global {
 }
 
 const MIN_HEIGHT: Record<string, number> = {
-  horizontal: 90,
+  horizontal: 60,
   rectangle: 250,
 };
 

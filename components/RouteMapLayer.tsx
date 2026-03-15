@@ -229,7 +229,7 @@ export default function RouteMapLayer({ routeState, shortlist, hoveredHopOptionI
         ensureMarker(p.placeId, { lat: p.lat, lng: p.lng }, visitedIcon(), 2);
       }
     }
-  }, [map, routeState, shortlist]);
+  }, [map, routeState, shortlist, hoveredHopOptionId]);
 
   // Draw polylines for new completed hops (also handles undo by removing excess)
   useEffect(() => {

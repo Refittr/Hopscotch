@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import CitySearch from "./CitySearch";
 import MyListSection from "./MyListSection";
-import AdUnit from "./AdUnit";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
 
@@ -60,10 +59,6 @@ export default function Sidebar({
   }, [shortlist.length]);
 
   const canStartRoute = shortlist.length >= 2;
-  const sidebarAdSlot = process.env.NEXT_PUBLIC_ADSENSE_ID
-    ? process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR
-    : undefined;
-
   return (
     <aside
       className="flex flex-col h-full flex-shrink-0"
@@ -171,27 +166,6 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Sidebar ad — between My List and Start Route */}
-      {sidebarAdSlot && (
-        <div
-          className="px-4 pt-3 pb-2 flex-shrink-0"
-          style={{ borderTop: "1px solid var(--border)" }}
-        >
-          <p
-            style={{
-              fontSize: "9px",
-              color: "var(--muted)",
-              letterSpacing: "0.12em",
-              fontFamily: "var(--font-dm-sans)",
-              marginBottom: "4px",
-              opacity: 0.5,
-            }}
-          >
-            AD
-          </p>
-          <AdUnit slot={sidebarAdSlot} format="horizontal" />
-        </div>
-      )}
 
       {/* Footer */}
       <div
