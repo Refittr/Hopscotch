@@ -5,37 +5,52 @@ const client = new Anthropic();
 
 export async function POST(req: NextRequest) {
   try {
-    const { currentSpot, city, options, activeVibes, nearbyBrowsePOIs } =
+    const { currentSpot, city, options, activeVibes, nearbyBrowsePOIs, shortlistContext } =
       await req.json();
 
-    const optionLines = options
-      .map(
-        (o: { name: string; category: string; directionHint: string }, i: number) =>
-          `${i + 1}. ${o.name} (${o.category}) — ${o.directionHint}`
-      )
+    const shortlistLines = (shortlistContext as Array<{ name: string; category: string }>)
+      .map((s) => `- ${s.name} (${s.category})`)
       .join("\n");
 
-    const nearbyNames = (nearbyBrowsePOIs as Array<{ name: string }>)
-      .slice(0, 10)
-      .map((p) => p.name)
-      .join(", ");
+    const optionLines = (options as Array<{ name: string; category: string; directionHint: string }>)
+      .map((o, i) => `${i + 1}. ${o.name} (${o.category}) — ${o.directionHint}`)
+      .join("\n");
 
-    const prompt = `You are a savvy local city guide. A traveller is currently at "${currentSpot.name}" in ${city} and choosing their next stop.
+    const nearbyLines = (nearbyBrowsePOIs as Array<{ name: string; category: string; rating?: number }>)
+      .map((p) => `- ${p.name} (${p.category})${p.rating ? ` ★${p.rating}` : ""}`)
+      .join("\n");
 
-Their 3 next-hop options are:
+    const vibeNote =
+      activeVibes.length > 0
+        ? `Their selected vibes: ${(activeVibes as string[]).join(", ")}.`
+        : "";
+
+    const prompt = `You are a sharp local city guide in ${city}. A traveller is currently at "${currentSpot.name}" and deciding their next stop.
+
+Their curated route so far — this is their taste:
+${shortlistLines || "Just starting out"}
+
+${vibeNote}
+
+Their 3 next-hop options:
 ${optionLines}
 
-Their interests: ${activeVibes.length > 0 ? activeVibes.join(", ") : "general sightseeing"}.
-Other nearby spots in the area (not on their route): ${nearbyNames || "none known"}.
+Other spots nearby NOT on their list (sorted by proximity, with ratings where available):
+${nearbyLines || "none"}
 
-Suggest ONE hidden gem or underrated spot from the nearby list that would be worth a quick detour on the way to one of their hop options. Make it feel like a local tip, not a tourist brochure.
+Your job: suggest ONE spot from the nearby list that genuinely fits the character of what they've already picked. It should feel like something a knowledgeable local would mention — not a tourist trap, something that complements their taste.
 
-Reply with ONLY valid JSON — no markdown, no explanation, just the object:
-{"name":"<spot name>","nearOption":"<exact name of the hop option it's near>","reason":"<one punchy sentence why it's worth it>"}`;
+If nothing nearby clearly fits their vibe, fall back to the highest-rated option in the nearby list.
+If the nearby list is empty, invent a plausible local recommendation that fits their taste.
+
+Keep the reason punchy — one sentence, no fluff.
+
+Reply with ONLY valid JSON, no markdown:
+{"name":"<spot name>","nearOption":"<exact name of the closest hop option>","reason":"<one sentence why it fits their taste>"}`;
 
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 250,
+      max_tokens: 200,
       messages: [{ role: "user", content: prompt }],
     });
 

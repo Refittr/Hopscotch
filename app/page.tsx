@@ -11,7 +11,7 @@ import Toast from "@/components/Toast";
 import type { POI } from "@/types/poi";
 import type { RouteState, HopOption, HopPosition } from "@/types/route";
 import { poiMatchesVibes } from "@/lib/placesCategories";
-import { computeHopOptions } from "@/lib/routeUtils";
+import { computeHopOptions, haversineKm } from "@/lib/routeUtils";
 
 export interface SelectedCity {
   name: string;
@@ -34,6 +34,7 @@ export default function Home() {
   // ── Route state ─────────────────────────────────────────────────────────
   const [routeState, setRouteState] = useState<RouteState | null>(null);
   const [hoveredHopOptionId, setHoveredHopOptionId] = useState<string | null>(null);
+  const [suggestionPreviewPos, setSuggestionPreviewPos] = useState<{ lat: number; lng: number } | null>(null);
   const aiCallKeyRef = useRef<string>("");
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
@@ -112,8 +113,23 @@ export default function Home() {
       try {
         const nearbyBrowsePOIs = pois
           .filter((p) => !shortlistIds.has(p.placeId))
-          .slice(0, 12)
-          .map((p) => ({ name: p.name, category: p.category }));
+          .map((p) => ({
+            name: p.name,
+            category: p.category,
+            rating: p.rating,
+            distKm: haversineKm(
+              { lat: currentPosition.lat, lng: currentPosition.lng },
+              { lat: p.lat, lng: p.lng }
+            ),
+          }))
+          .sort((a, b) => a.distKm - b.distKm)
+          .slice(0, 20)
+          .map(({ name, category, rating }) => ({ name, category, rating }));
+
+        const shortlistContext = shortlist.map((p) => ({
+          name: p.name,
+          category: p.category,
+        }));
 
         const res = await fetch("/api/suggest", {
           method: "POST",
@@ -134,6 +150,7 @@ export default function Home() {
             })),
             activeVibes: Array.from(activeVibes),
             nearbyBrowsePOIs,
+            shortlistContext,
           }),
         });
         if (!res.ok) throw new Error("non-200");
@@ -282,6 +299,32 @@ export default function Home() {
     [pois, handleAddToShortlist]
   );
 
+  const handleRemoveFromRoute = useCallback((placeId: string) => {
+    handleRemoveFromShortlist(placeId);
+    setRouteState((prev) => {
+      if (!prev || prev.phase !== "hopping") return prev;
+      const newRemaining = prev.remainingPois.filter((p) => p.placeId !== placeId);
+      const newHopOptions = computeHopOptions(
+        { lat: prev.currentPosition.lat, lng: prev.currentPosition.lng },
+        newRemaining,
+        3
+      );
+      return { ...prev, remainingPois: newRemaining, hopOptions: newHopOptions };
+    });
+  }, [handleRemoveFromShortlist]);
+
+  const handleSuggestionHover = useCallback((hovering: boolean) => {
+    if (!hovering) { setSuggestionPreviewPos(null); return; }
+    setRouteState((prev) => {
+      if (!prev || prev.phase !== "hopping" || !prev.aiSuggestion) return prev;
+      const poi = pois.find(
+        (p) => p.name.toLowerCase() === prev.aiSuggestion!.name.toLowerCase()
+      );
+      if (poi) setSuggestionPreviewPos({ lat: poi.lat, lng: poi.lng });
+      return prev;
+    });
+  }, [pois]);
+
   const handleUndoLastHop = useCallback(() => {
     setRouteState((prev) => {
       if (!prev || prev.phase !== "hopping" || prev.completedHops.length === 0) return prev;
@@ -350,9 +393,11 @@ export default function Home() {
               onHopSelect={handleHopSelect}
               onAddAISuggestion={handleAddAISuggestion}
               onUndoLastHop={handleUndoLastHop}
+              onRemoveFromRoute={handleRemoveFromRoute}
               onStartOver={handleStartOver}
               onBackToPlanning={handleBackToPlanning}
-              onHopHover={setHoveredHopOptionId}
+              onSpotHover={setHoveredHopOptionId}
+              onSuggestionHover={handleSuggestionHover}
             />
           ) : (
             <>
@@ -382,6 +427,7 @@ export default function Home() {
           routeState={routeState}
           shortlist={shortlist}
           hoveredHopOptionId={hoveredHopOptionId}
+          suggestionPreviewPos={suggestionPreviewPos}
         />
 
         {/* Mobile */}

@@ -9,6 +9,7 @@ interface Props {
   routeState: RouteState | null;
   shortlist: POI[];
   hoveredHopOptionId?: string | null;
+  suggestionPreviewPos?: { lat: number; lng: number } | null;
 }
 
 // ── SVG marker icon helpers ─────────────────────────────────────────────────
@@ -63,25 +64,39 @@ function dimIcon(): google.maps.Icon {
   );
 }
 
-function startPickIcon(): google.maps.Icon {
+function startPickIcon(n: number): google.maps.Icon {
   return svgIcon(
-    `<svg width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="13" cy="13" r="12" fill="rgba(0,240,255,0.08)" stroke="#00F0FF" stroke-width="2" stroke-dasharray="4 3"/>
-      <circle cx="13" cy="13" r="5" fill="rgba(0,240,255,0.5)"/>
+    `<svg width="34" height="34" viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="17" cy="17" r="16" fill="rgba(0,240,255,0.1)" stroke="#00F0FF" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <circle cx="17" cy="17" r="11" fill="rgba(0,240,255,0.18)"/>
+      <text x="17" y="22" text-anchor="middle" fill="#00F0FF" font-size="13" font-weight="bold" font-family="Arial">${n}</text>
     </svg>`,
-    26
+    34
+  );
+}
+
+function startPickIconHighlighted(n: number): google.maps.Icon {
+  return svgIcon(
+    `<svg width="46" height="46" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="23" cy="23" r="22" fill="rgba(0,240,255,0.18)" stroke="#00F0FF" stroke-width="2"/>
+      <circle cx="23" cy="23" r="15" fill="rgba(0,240,255,0.35)"/>
+      <text x="23" y="29" text-anchor="middle" fill="#00F0FF" font-size="16" font-weight="bold" font-family="Arial">${n}</text>
+    </svg>`,
+    46
   );
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
 
-export default function RouteMapLayer({ routeState, shortlist, hoveredHopOptionId }: Props) {
+export default function RouteMapLayer({ routeState, shortlist, hoveredHopOptionId, suggestionPreviewPos }: Props) {
   const map = useMap();
   const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
   const polylinesRef = useRef<google.maps.Polyline[]>([]);
   const drawnHopsRef = useRef(0);
   const directionsRef = useRef<google.maps.DirectionsService | null>(null);
   const previewPolylineRef = useRef<google.maps.Polyline | null>(null);
+  const suggestionPolylineRef = useRef<google.maps.Polyline | null>(null);
+  const suggestionMarkerRef = useRef<google.maps.Marker | null>(null);
 
   // Init directions service
   useEffect(() => {
@@ -102,6 +117,10 @@ export default function RouteMapLayer({ routeState, shortlist, hoveredHopOptionI
     drawnHopsRef.current = 0;
     previewPolylineRef.current?.setMap(null);
     previewPolylineRef.current = null;
+    suggestionPolylineRef.current?.setMap(null);
+    suggestionPolylineRef.current = null;
+    suggestionMarkerRef.current?.setMap(null);
+    suggestionMarkerRef.current = null;
   }, [routeState]);
 
   // Update markers based on route phase
@@ -135,10 +154,16 @@ export default function RouteMapLayer({ routeState, shortlist, hoveredHopOptionI
       for (const [key] of markersRef.current) {
         if (!shortlistIds.has(key)) hideMarker(key);
       }
-      // Show all shortlist spots as dashed "pickable" markers
-      for (const p of shortlist) {
-        ensureMarker(p.placeId, { lat: p.lat, lng: p.lng }, startPickIcon(), 5);
-      }
+      // Show all shortlist spots as numbered dashed "pickable" markers
+      shortlist.forEach((p, i) => {
+        const isHighlighted = p.placeId === hoveredHopOptionId;
+        ensureMarker(
+          p.placeId,
+          { lat: p.lat, lng: p.lng },
+          isHighlighted ? startPickIconHighlighted(i + 1) : startPickIcon(i + 1),
+          isHighlighted ? 10 : 5
+        );
+      });
       // Fit map to show all of them
       if (shortlist.length > 0) {
         const bounds = new google.maps.LatLngBounds();
@@ -311,12 +336,63 @@ export default function RouteMapLayer({ routeState, shortlist, hoveredHopOptionI
     });
   }, [map, hoveredHopOptionId, routeState]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Suggestion preview polyline + marker
+  useEffect(() => {
+    suggestionPolylineRef.current?.setMap(null);
+    suggestionPolylineRef.current = null;
+    suggestionMarkerRef.current?.setMap(null);
+    suggestionMarkerRef.current = null;
+
+    if (!map || !suggestionPreviewPos || !routeState || routeState.phase !== "hopping") return;
+
+    const from = { lat: routeState.currentPosition.lat, lng: routeState.currentPosition.lng };
+    const to = suggestionPreviewPos;
+
+    suggestionPolylineRef.current = new google.maps.Polyline({
+      path: [from, to],
+      strokeColor: "#FF2D78",
+      strokeOpacity: 0,
+      strokeWeight: 2,
+      icons: [
+        {
+          icon: {
+            path: "M 0,-1 0,1",
+            strokeOpacity: 0.7,
+            strokeColor: "#FF2D78",
+            scale: 3,
+          },
+          offset: "0",
+          repeat: "14px",
+        },
+      ],
+      map,
+      zIndex: 7,
+    });
+
+    suggestionMarkerRef.current = new google.maps.Marker({
+      position: to,
+      map,
+      icon: svgIcon(
+        `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="14" cy="14" r="13" fill="rgba(255,45,120,0.2)"/>
+          <circle cx="14" cy="14" r="9" fill="#FF2D78"/>
+          <text x="14" y="19" text-anchor="middle" fill="white" font-size="14" font-family="Arial">✨</text>
+        </svg>`,
+        28
+      ),
+      zIndex: 9,
+      optimized: false,
+    });
+  }, [map, suggestionPreviewPos, routeState]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       for (const m of markersRef.current.values()) m.setMap(null);
       for (const pl of polylinesRef.current) pl.setMap(null);
       previewPolylineRef.current?.setMap(null);
+      suggestionPolylineRef.current?.setMap(null);
+      suggestionMarkerRef.current?.setMap(null);
     };
   }, []);
 

@@ -14,9 +14,11 @@ interface Props {
   onHopSelect: (option: HopOption) => void;
   onAddAISuggestion: (name: string) => void;
   onUndoLastHop: () => void;
+  onRemoveFromRoute: (placeId: string) => void;
   onStartOver: () => void;
   onBackToPlanning: () => void;
-  onHopHover: (placeId: string | null) => void;
+  onSpotHover: (placeId: string | null) => void;
+  onSuggestionHover: (hovering: boolean) => void;
 }
 
 // ── Shared styles ────────────────────────────────────────────────────────────
@@ -32,6 +34,79 @@ const LABEL: React.CSSProperties = {
 const MONO: React.CSSProperties = { fontFamily: "var(--font-dm-sans)" };
 
 // ── Sub-components ───────────────────────────────────────────────────────────
+
+function InfoTooltip({ poi }: { poi: POI }) {
+  const [show, setShow] = useState(false);
+  const usefulTypes = poi.types
+    .filter((t) => !["point_of_interest", "establishment", "food", "premise"].includes(t))
+    .slice(0, 3)
+    .map((t) => t.replace(/_/g, " "));
+
+  return (
+    <div className="relative flex-shrink-0" style={{ zIndex: 20 }}>
+      <button
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={(e) => e.stopPropagation()}
+        className="w-5 h-5 rounded-full flex items-center justify-center transition-all"
+        style={{
+          background: show ? "rgba(0,240,255,0.15)" : "var(--border)",
+          color: show ? "var(--accent)" : "var(--muted)",
+          fontSize: "10px",
+          fontWeight: 700,
+          fontFamily: "var(--font-dm-sans)",
+          border: `1px solid ${show ? "rgba(0,240,255,0.3)" : "transparent"}`,
+        }}
+      >
+        i
+      </button>
+      {show && (
+        <div
+          className="absolute right-0 bottom-full mb-2 rounded-xl p-3 pointer-events-none"
+          style={{
+            background: "#1c1a21",
+            border: "1px solid var(--border)",
+            width: "210px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+          }}
+        >
+          <p className="text-sm font-semibold mb-1.5" style={{ color: "var(--foreground)", ...MONO }}>
+            {poi.name}
+          </p>
+          {poi.rating != null && (
+            <div className="flex items-center gap-1.5 mb-1">
+              <span style={{ color: "#f4c430", fontSize: "12px" }}>★</span>
+              <span className="text-xs font-semibold" style={{ color: "var(--foreground)", ...MONO }}>
+                {poi.rating.toFixed(1)}
+              </span>
+              {poi.ratingsCount != null && (
+                <span className="text-xs" style={{ color: "var(--muted)", ...MONO }}>
+                  ({poi.ratingsCount.toLocaleString()})
+                </span>
+              )}
+            </div>
+          )}
+          {poi.isOpen != null && (
+            <div className="flex items-center gap-1.5 mb-1">
+              <div
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ background: poi.isOpen ? "#22c55e" : "#FF2D78" }}
+              />
+              <span className="text-xs" style={{ color: poi.isOpen ? "#22c55e" : "#FF2D78", ...MONO }}>
+                {poi.isOpen ? "Open now" : "Closed"}
+              </span>
+            </div>
+          )}
+          {usefulTypes.length > 0 && (
+            <p className="text-xs" style={{ color: "var(--muted)", ...MONO, lineHeight: 1.4 }}>
+              {usefulTypes.join(" · ")}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -49,79 +124,86 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function HopOptionCard({
   option,
   onSelect,
-  onHover,
+  onSpotHover,
+  onRemove,
 }: {
   option: HopOption;
   onSelect: () => void;
-  onHover: (placeId: string | null) => void;
+  onSpotHover: (placeId: string | null) => void;
+  onRemove: (placeId: string) => void;
 }) {
   const [hover, setHover] = useState(false);
   return (
-    <button
-      onClick={onSelect}
-      onMouseEnter={() => { setHover(true); onHover(option.poi.placeId); }}
-      onMouseLeave={() => { setHover(false); onHover(null); }}
-      className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+    <div
+      className="flex items-stretch rounded-xl overflow-hidden transition-all"
       style={{
-        background: hover ? "rgba(255,45,120,0.06)" : "var(--input-bg)",
         border: `1px solid ${hover ? "#FF2D78" : "var(--border)"}`,
         boxShadow: hover ? "0 0 12px rgba(255,45,120,0.12)" : "none",
         transition: "all 0.15s ease",
       }}
+      onMouseEnter={() => { setHover(true); onSpotHover(option.poi.placeId); }}
+      onMouseLeave={() => { setHover(false); onSpotHover(null); }}
     >
-      {/* Number badge */}
-      <div
-        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
-        style={{ background: "#FF2D78", color: "#fff", ...MONO }}
+      {/* Main select button */}
+      <button
+        onClick={onSelect}
+        className="flex-1 flex items-center gap-3 p-3 text-left transition-all"
+        style={{ background: hover ? "rgba(255,45,120,0.06)" : "var(--input-bg)" }}
       >
-        {option.optionIndex}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p
-          className="text-sm font-medium truncate"
-          style={{ color: "var(--foreground)", ...MONO }}
+        <div
+          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
+          style={{ background: "#FF2D78", color: "#fff", ...MONO }}
         >
-          {option.poi.name}
-        </p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span style={{ ...LABEL, fontSize: "11px", letterSpacing: "0.08em" }}>
-            {getCategoryEmoji(option.poi.category)} {option.poi.category}
-          </span>
+          {option.optionIndex}
         </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate" style={{ color: "var(--foreground)", ...MONO }}>
+            {option.poi.name}
+          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span style={{ ...LABEL, fontSize: "11px", letterSpacing: "0.08em" }}>
+              {getCategoryEmoji(option.poi.category)} {option.poi.category}
+            </span>
+          </div>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-xs font-semibold" style={{ color: "var(--accent)", ...MONO }}>
+            ~{option.walkMinutes} min
+          </p>
+          <p className="text-xs" style={{ color: "var(--muted)", ...MONO }}>
+            {option.directionHint}
+          </p>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+          style={{ color: hover ? "#FF2D78" : "var(--muted)", flexShrink: 0 }}>
+          <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.5"
+            strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* Info tooltip */}
+      <div className="flex items-center px-1.5" style={{ background: hover ? "rgba(255,45,120,0.06)" : "var(--input-bg)", transition: "background 0.15s ease" }}>
+        <InfoTooltip poi={option.poi} />
       </div>
 
-      {/* Distance / time */}
-      <div className="text-right flex-shrink-0">
-        <p
-          className="text-xs font-semibold"
-          style={{ color: "var(--accent)", ...MONO }}
-        >
-          ~{option.walkMinutes} min
-        </p>
-        <p className="text-xs" style={{ color: "var(--muted)", ...MONO }}>
-          {option.directionHint}
-        </p>
-      </div>
-
-      {/* Arrow */}
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 14 14"
-        fill="none"
-        style={{ color: hover ? "#FF2D78" : "var(--muted)", flexShrink: 0 }}
+      {/* Remove button */}
+      <button
+        onClick={() => onRemove(option.poi.placeId)}
+        className="flex items-center justify-center px-2.5 transition-all flex-shrink-0"
+        style={{
+          background: hover ? "rgba(255,45,120,0.06)" : "var(--input-bg)",
+          borderLeft: `1px solid ${hover ? "rgba(255,45,120,0.3)" : "var(--border)"}`,
+          color: "var(--muted)",
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#FF2D78"; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--muted)"; }}
+        title="Remove from route"
       >
-        <path
-          d="M3 7h8M7.5 3.5L11 7l-3.5 3.5"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </button>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      </button>
+    </div>
   );
 }
 
@@ -129,20 +211,26 @@ function AISuggestionCard({
   suggestion,
   loading,
   onAdd,
+  onHover,
 }: {
   suggestion: AISuggestion | null;
   loading: boolean;
   onAdd: (name: string) => void;
+  onHover: (hovering: boolean) => void;
 }) {
+  const [hover, setHover] = useState(false);
   if (!loading && !suggestion) return null;
 
   return (
     <div
-      className="rounded-xl p-4"
+      className="rounded-xl p-4 transition-all cursor-default"
+      onMouseEnter={() => { setHover(true); onHover(true); }}
+      onMouseLeave={() => { setHover(false); onHover(false); }}
       style={{
-        border: "1.5px dashed #FF2D78",
-        background: "rgba(255,45,120,0.07)",
-        boxShadow: "0 0 18px rgba(255,45,120,0.1)",
+        border: `1.5px dashed ${hover ? "#FF2D78" : "rgba(255,45,120,0.6)"}`,
+        background: hover ? "rgba(255,45,120,0.1)" : "rgba(255,45,120,0.07)",
+        boxShadow: hover ? "0 0 24px rgba(255,45,120,0.18)" : "0 0 18px rgba(255,45,120,0.1)",
+        transition: "all 0.15s ease",
       }}
     >
       <div className="flex items-center gap-2 mb-3">
@@ -192,7 +280,7 @@ function AISuggestionCard({
             Near <span style={{ color: "var(--foreground)" }}>{suggestion.nearOption}</span> — {suggestion.reason}
           </p>
           <button
-            onClick={() => onAdd(suggestion.name)}
+            onClick={() => { onAdd(suggestion.name); onHover(false); }}
             className="w-full py-2 text-sm font-semibold rounded-lg transition-all"
             style={{
               background: "rgba(255,45,120,0.15)",
@@ -202,7 +290,7 @@ function AISuggestionCard({
               boxShadow: "0 0 10px rgba(255,45,120,0.12)",
             }}
           >
-            + Add to my list
+            + Add to route
           </button>
         </>
       )}
@@ -262,12 +350,87 @@ function CompletedTimeline({ hops }: { hops: TimelineHop[] }) {
 
 // ── Phase views ──────────────────────────────────────────────────────────────
 
+function PickSpotRow({
+  poi,
+  index,
+  onPickStart,
+  onRemove,
+  onHover,
+}: {
+  poi: POI;
+  index: number;
+  onPickStart: Props["onPickStart"];
+  onRemove: (placeId: string) => void;
+  onHover: (placeId: string | null) => void;
+}) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div
+      className="flex items-stretch rounded-xl overflow-hidden transition-all"
+      style={{
+        border: `1px solid ${hover ? "var(--accent)" : "var(--border)"}`,
+        boxShadow: hover ? "0 0 10px rgba(0,240,255,0.08)" : "none",
+        transition: "all 0.15s ease",
+      }}
+      onMouseEnter={() => { setHover(true); onHover(poi.placeId); }}
+      onMouseLeave={() => { setHover(false); onHover(null); }}
+    >
+      <button
+        onClick={() => onPickStart(poi)}
+        className="flex-1 flex items-center gap-2.5 p-3 text-left transition-all"
+        style={{ background: hover ? "var(--accent-dim)" : "var(--input-bg)" }}
+      >
+        <div
+          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+          style={{ background: hover ? "var(--accent)" : "var(--border)", color: hover ? "#0a0a0a" : "var(--muted)", ...MONO, transition: "all 0.15s ease" }}
+        >
+          {index}
+        </div>
+        <span style={{ fontSize: "16px" }}>{getCategoryEmoji(poi.category)}</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium truncate" style={{ color: "var(--foreground)", ...MONO }}>
+            {poi.name}
+          </p>
+          <p style={{ ...LABEL, fontSize: "10px" }}>{poi.category}</p>
+        </div>
+      </button>
+
+      {/* Info tooltip */}
+      <div className="flex items-center px-2" style={{ background: hover ? "var(--accent-dim)" : "var(--input-bg)", transition: "background 0.15s ease" }}>
+        <InfoTooltip poi={poi} />
+      </div>
+
+      {/* Remove */}
+      <button
+        onClick={() => onRemove(poi.placeId)}
+        className="flex items-center justify-center px-2.5 flex-shrink-0 transition-all"
+        style={{
+          background: hover ? "var(--accent-dim)" : "var(--input-bg)",
+          borderLeft: `1px solid ${hover ? "rgba(0,240,255,0.2)" : "var(--border)"}`,
+          color: "var(--muted)",
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#FF2D78"; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--muted)"; }}
+        title="Remove from list"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 function PickingStartView({
   shortlist,
   onPickStart,
+  onRemoveFromRoute,
+  onSpotHover,
 }: {
   shortlist: POI[];
   onPickStart: Props["onPickStart"];
+  onRemoveFromRoute: (placeId: string) => void;
+  onSpotHover: (placeId: string | null) => void;
 }) {
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState(false);
@@ -333,35 +496,15 @@ function PickingStartView({
 
       <SectionLabel>Or start from a spot</SectionLabel>
 
-      {shortlist.map((poi) => (
-        <button
+      {shortlist.map((poi, i) => (
+        <PickSpotRow
           key={poi.placeId}
-          onClick={() => onPickStart(poi)}
-          className="flex items-center gap-2.5 p-3 rounded-xl text-left transition-all w-full group"
-          style={{
-            background: "var(--input-bg)",
-            border: "1px solid var(--border)",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
-            (e.currentTarget as HTMLElement).style.background = "var(--accent-dim)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
-            (e.currentTarget as HTMLElement).style.background = "var(--input-bg)";
-          }}
-        >
-          <span style={{ fontSize: "18px" }}>{getCategoryEmoji(poi.category)}</span>
-          <div className="min-w-0 flex-1">
-            <p
-              className="text-sm font-medium truncate"
-              style={{ color: "var(--foreground)", ...MONO }}
-            >
-              {poi.name}
-            </p>
-            <p style={{ ...LABEL, fontSize: "10px" }}>{poi.category}</p>
-          </div>
-        </button>
+          poi={poi}
+          index={i + 1}
+          onPickStart={onPickStart}
+          onRemove={onRemoveFromRoute}
+          onHover={onSpotHover}
+        />
       ))}
     </div>
   );
@@ -372,13 +515,17 @@ function HoppingView({
   onHopSelect,
   onAddAISuggestion,
   onUndoLastHop,
-  onHopHover,
+  onRemoveFromRoute,
+  onSpotHover,
+  onSuggestionHover,
 }: {
   state: Extract<RouteState, { phase: "hopping" }>;
   onHopSelect: (o: HopOption) => void;
   onAddAISuggestion: (name: string) => void;
   onUndoLastHop: () => void;
-  onHopHover: (placeId: string | null) => void;
+  onRemoveFromRoute: (placeId: string) => void;
+  onSpotHover: (placeId: string | null) => void;
+  onSuggestionHover: (hovering: boolean) => void;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -437,7 +584,8 @@ function HoppingView({
                 key={opt.poi.placeId}
                 option={opt}
                 onSelect={() => onHopSelect(opt)}
-                onHover={onHopHover}
+                onSpotHover={onSpotHover}
+                onRemove={onRemoveFromRoute}
               />
             ))}
           </div>
@@ -449,6 +597,7 @@ function HoppingView({
         suggestion={state.aiSuggestion}
         loading={state.aiLoading}
         onAdd={onAddAISuggestion}
+        onHover={onSuggestionHover}
       />
     </div>
   );
@@ -549,9 +698,11 @@ export default function RouteMode({
   onHopSelect,
   onAddAISuggestion,
   onUndoLastHop,
+  onRemoveFromRoute,
   onStartOver,
   onBackToPlanning,
-  onHopHover,
+  onSpotHover,
+  onSuggestionHover,
 }: Props) {
   const cityName =
     routeState.phase !== "picking_start" ? routeState.cityName : null;
@@ -629,7 +780,12 @@ export default function RouteMode({
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto px-5 pb-5 min-h-0">
         {routeState.phase === "picking_start" && (
-          <PickingStartView shortlist={shortlist} onPickStart={onPickStart} />
+          <PickingStartView
+            shortlist={shortlist}
+            onPickStart={onPickStart}
+            onRemoveFromRoute={onRemoveFromRoute}
+            onSpotHover={onSpotHover}
+          />
         )}
         {routeState.phase === "hopping" && (
           <HoppingView
@@ -637,7 +793,9 @@ export default function RouteMode({
             onHopSelect={onHopSelect}
             onAddAISuggestion={onAddAISuggestion}
             onUndoLastHop={onUndoLastHop}
-            onHopHover={onHopHover}
+            onRemoveFromRoute={onRemoveFromRoute}
+            onSpotHover={onSpotHover}
+            onSuggestionHover={onSuggestionHover}
           />
         )}
         {routeState.phase === "complete" && (

@@ -122,6 +122,7 @@ interface Props {
   routeState: RouteState | null;
   shortlist: POI[];
   hoveredHopOptionId: string | null;
+  suggestionPreviewPos: { lat: number; lng: number } | null;
 }
 
 export default function MapArea({
@@ -136,6 +137,7 @@ export default function MapArea({
   routeState,
   shortlist,
   hoveredHopOptionId,
+  suggestionPreviewPos,
 }: Props) {
   const inRouteMode = routeState !== null;
   return (
@@ -162,7 +164,7 @@ export default function MapArea({
           onMarkerClick={onMarkerClick}
           hideAll={inRouteMode}
         />
-        <RouteMapLayer routeState={routeState} shortlist={shortlist} hoveredHopOptionId={hoveredHopOptionId} />
+        <RouteMapLayer routeState={routeState} shortlist={shortlist} hoveredHopOptionId={hoveredHopOptionId} suggestionPreviewPos={suggestionPreviewPos} />
       </Map>
 
       {/* Overlay when no city selected */}
