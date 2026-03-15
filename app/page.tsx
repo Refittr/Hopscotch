@@ -40,6 +40,14 @@ export default function Home() {
   const aiCallKeyRef = useRef<string>("");
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = () => setIsMobile(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   // ── Derived ─────────────────────────────────────────────────────────────
   const shortlistIds = useMemo(
@@ -400,79 +408,72 @@ export default function Home() {
     onStartRoute: handleStartRoute,
   };
 
+  const mapArea = (
+    <MapArea
+      selectedCity={selectedCity}
+      pois={pois}
+      visibleIds={visibleIds}
+      shortlistIds={shortlistIds}
+      highlightedPoiId={highlightedPoiId}
+      onMarkerClick={setHighlightedPoiId}
+      onPoisLoaded={handlePoisLoaded}
+      onLoadingChange={handleLoadingChange}
+      routeState={routeState}
+      shortlist={shortlist}
+      hoveredHopOptionId={hoveredHopOptionId}
+      suggestionPreviewPos={suggestionPreviewPos}
+    />
+  );
+
   return (
     <APIProvider apiKey={apiKey} libraries={["places"]}>
-      {/* ── Desktop layout ── */}
-      <div className="hidden md:flex h-screen" style={{ overflow: "clip" }}>
-        {routeState ? (
-          <RouteMode
-            routeState={routeState}
-            shortlist={shortlist}
-            browsePOIs={filteredPois}
-            onPickStart={handlePickStart}
-            onHopSelect={handleHopSelect}
-            onAddAISuggestion={handleAddAISuggestion}
-            onUndoLastHop={handleUndoLastHop}
-            onRemoveFromRoute={handleRemoveFromRoute}
-            onFinishRoute={handleFinishRoute}
-            onStartOver={handleStartOver}
-            onBackToPlanning={handleBackToPlanning}
-            onSpotHover={setHoveredHopOptionId}
-            onSuggestionHover={handleSuggestionHover}
-            onToast={pushToast}
-          />
-        ) : (
-          <>
-            <Sidebar {...sidebarProps} />
-            <BrowsePanel
-              pois={filteredPois}
-              isLoading={isLoading}
-              highlightedPoiId={highlightedPoiId}
-              hasCity={selectedCity != null}
-              shortlistIds={shortlistIds}
-              onAddToShortlist={handleAddToShortlist}
-              onHighlight={setHighlightedPoiId}
+      {isMobile === null ? null : !isMobile ? (
+        /* ── Desktop layout ── */
+        <div className="flex h-screen" style={{ overflow: "clip" }}>
+          {routeState ? (
+            <RouteMode
+              routeState={routeState}
+              shortlist={shortlist}
+              browsePOIs={filteredPois}
+              onPickStart={handlePickStart}
+              onHopSelect={handleHopSelect}
+              onAddAISuggestion={handleAddAISuggestion}
+              onUndoLastHop={handleUndoLastHop}
+              onRemoveFromRoute={handleRemoveFromRoute}
+              onFinishRoute={handleFinishRoute}
+              onStartOver={handleStartOver}
+              onBackToPlanning={handleBackToPlanning}
+              onSpotHover={setHoveredHopOptionId}
+              onSuggestionHover={handleSuggestionHover}
+              onToast={pushToast}
             />
-          </>
-        )}
-        <MapArea
-          selectedCity={selectedCity}
-          pois={pois}
-          visibleIds={visibleIds}
-          shortlistIds={shortlistIds}
-          highlightedPoiId={highlightedPoiId}
-          onMarkerClick={setHighlightedPoiId}
-          onPoisLoaded={handlePoisLoaded}
-          onLoadingChange={handleLoadingChange}
-          routeState={routeState}
-          shortlist={shortlist}
-          hoveredHopOptionId={hoveredHopOptionId}
-          suggestionPreviewPos={suggestionPreviewPos}
-        />
-      </div>
-
-      {/* ── Mobile layout — map on top, sidebar below, no fixed/absolute overlap ── */}
-      <div className="md:hidden flex flex-col h-screen" style={{ overflow: "clip" }}>
-        <div style={{ height: "50vh", flexShrink: 0, position: "relative", touchAction: "none" }}>
-          <MapArea
-            selectedCity={selectedCity}
-            pois={pois}
-            visibleIds={visibleIds}
-            shortlistIds={shortlistIds}
-            highlightedPoiId={highlightedPoiId}
-            onMarkerClick={setHighlightedPoiId}
-            onPoisLoaded={handlePoisLoaded}
-            onLoadingChange={handleLoadingChange}
-            routeState={routeState}
-            shortlist={shortlist}
-            hoveredHopOptionId={hoveredHopOptionId}
-            suggestionPreviewPos={suggestionPreviewPos}
-          />
+          ) : (
+            <>
+              <Sidebar {...sidebarProps} />
+              <BrowsePanel
+                pois={filteredPois}
+                isLoading={isLoading}
+                highlightedPoiId={highlightedPoiId}
+                hasCity={selectedCity != null}
+                shortlistIds={shortlistIds}
+                onAddToShortlist={handleAddToShortlist}
+                onHighlight={setHighlightedPoiId}
+              />
+            </>
+          )}
+          {mapArea}
         </div>
-        <div style={{ height: "50vh" }}>
-          <MobileSidebar {...sidebarProps} />
+      ) : (
+        /* ── Mobile layout ── */
+        <div className="flex flex-col h-screen" style={{ overflow: "clip" }}>
+          <div style={{ height: "50vh", flexShrink: 0, position: "relative", touchAction: "none" }}>
+            {mapArea}
+          </div>
+          <div style={{ height: "50vh" }}>
+            <MobileSidebar {...sidebarProps} />
+          </div>
         </div>
-      </div>
+      )}
 
       <Toast
         message="Max 15 spots per route"
