@@ -92,11 +92,14 @@ function GestureEnabler() {
     if (!map) return;
     map.setOptions({ gestureHandling: "greedy", draggable: true });
     google.maps.event.trigger(map, "resize");
-    // Re-trigger after layout settles (Android Chrome sometimes initializes touch
-    // handlers before the 50vh container has its final dimensions)
     const t = setTimeout(() => {
       map.setOptions({ gestureHandling: "greedy", draggable: true });
       google.maps.event.trigger(map, "resize");
+      console.log("[MAP DIAG] gestureHandling:", map.get("gestureHandling"));
+      console.log("[MAP DIAG] container size:", map.getDiv().clientWidth, "x", map.getDiv().clientHeight);
+      console.log("[MAP DIAG] touch-action on gm-style:", (map.getDiv().querySelector(".gm-style") as HTMLElement)?.style.touchAction);
+      map.addListener("dragstart", () => console.log("[MAP DIAG] dragstart fired"));
+      map.addListener("drag", () => console.log("[MAP DIAG] drag fired"));
     }, 300);
     return () => clearTimeout(t);
   }, [map]);
