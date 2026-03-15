@@ -191,7 +191,7 @@ export default function Sidebar({
       {/* Footer */}
       <div
         className="px-4 py-4 flex-shrink-0"
-        style={{ borderTop: "1px solid var(--border)" }}
+        style={{ borderTop: "1px solid var(--border)", marginTop: scrollable ? "8px" : undefined }}
       >
         <button
           disabled={!canStartRoute}

@@ -38,8 +38,9 @@ export default function MobileSidebar(props: Props) {
   } = props;
 
   return (
+    <>
+    {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
     <div className="md:hidden absolute inset-x-0 bottom-0 z-50" style={{ pointerEvents: "none" }}>
-      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {expanded && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm"
@@ -111,8 +112,8 @@ export default function MobileSidebar(props: Props) {
         {/* Always-visible content when collapsed */}
         {!expanded && (
           <div
-            className="flex-1 min-h-0 px-4 pb-4"
-            style={{ overflowY: "auto", WebkitOverflowScrolling: "touch" as never, touchAction: "pan-y" }}
+            className="flex-1 min-h-0 px-4"
+            style={{ overflowY: "auto", WebkitOverflowScrolling: "touch" as never, touchAction: "pan-y", paddingBottom: "24px" }}
           >
             <Sidebar {...props} hideHeader scrollable />
           </div>
@@ -161,5 +162,6 @@ export default function MobileSidebar(props: Props) {
         )}
       </div>
     </div>
+    </>
   );
 }

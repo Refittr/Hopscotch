@@ -44,8 +44,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* POI card hover — show add button (desktop only; always visible on touch) */
-@media (hover: hover) {
+/* POI card hover — hide add button until hover on precise-pointer devices (mouse/trackpad) */
+@media (pointer: fine) {
   .poi-card .add-btn {
     opacity: 0;
   }
