@@ -4,6 +4,102 @@ import { useEffect, useRef, useState } from "react";
 import type { POI } from "@/types/poi";
 import { getCategoryEmoji } from "@/lib/placesCategories";
 
+declare global {
+  interface Window {
+    gyg?: { widgets: { init: () => void } };
+  }
+}
+
+const FOOD_CATEGORIES = new Set([
+  "Restaurant", "Café", "Bakery", "Bar", "Nightlife",
+]);
+
+const GYG_PARTNER_ID = "XHNEI9V";
+
+function GygWidgetSection({
+  poiId,
+  poiName,
+  poiCategory,
+  cityName,
+}: {
+  poiId: string;
+  poiName: string;
+  poiCategory: string;
+  cityName: string;
+}) {
+  const [hidden, setHidden] = useState(false);
+
+  // Food/drink spots rarely have specific tours — search city instead
+  const query = FOOD_CATEGORIES.has(poiCategory)
+    ? cityName
+    : `${poiName} ${cityName}`;
+
+  if (hidden) return null;
+
+  return (
+    <div>
+      <div style={{ height: "1px", background: "var(--border)", margin: "0 16px" }} />
+      <div className="px-4 pt-4 pb-5">
+        <p
+          className="text-xs uppercase tracking-widest mb-3"
+          style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
+        >
+          Tours &amp; experiences
+        </p>
+        <GygWidget query={query} poiId={poiId} onEmpty={() => setHidden(true)} />
+      </div>
+    </div>
+  );
+}
+
+function GygWidget({ query, poiId, onEmpty }: { query: string; poiId: string; onEmpty: () => void }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onEmptyRef = useRef(onEmpty);
+  useEffect(() => { onEmptyRef.current = onEmpty; }, [onEmpty]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    // Stamp fresh widget div
+    el.innerHTML = "";
+    const widget = document.createElement("div");
+    widget.setAttribute("data-gyg-widget", "auto");
+    widget.setAttribute("data-gyg-partner-id", GYG_PARTNER_ID);
+    widget.setAttribute("data-gyg-q", query);
+    el.appendChild(widget);
+
+    // Re-init the already-loaded GYG script for this new div
+    if (window.gyg?.widgets?.init) {
+      window.gyg.widgets.init();
+    }
+
+    // Hide section if no widget content appears within 6 s
+    const timer = setTimeout(() => {
+      const hasContent =
+        el.querySelector("iframe") ||
+        el.querySelector("[class*='gyg']") ||
+        el.querySelector("[data-gyg-loaded]");
+      if (!hasContent) onEmptyRef.current();
+    }, 6000);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, poiId]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        background: "var(--input-bg)",
+        borderRadius: "12px",
+        overflow: "hidden",
+        minHeight: "120px",
+      }}
+    />
+  );
+}
+
 export interface PlaceDetails {
   description: string | null;
   photos: string[];
@@ -41,7 +137,6 @@ export default function POIDetailCard({
   const [shareLabel, setShareLabel] = useState("Share");
   const touchStartX = useRef<number | null>(null);
 
-  const gygPartnerId = process.env.NEXT_PUBLIC_GYG_PARTNER_ID;
   const photos = details?.photos ?? [];
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
@@ -432,49 +527,14 @@ export default function POIDetailCard({
             </div>
           </div>
 
-          {/* GetYourGuide section */}
-          {gygPartnerId && cityName && (
-            <div className="px-4 py-4">
-              <p
-                className="text-xs font-semibold uppercase tracking-widest mb-3"
-                style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
-              >
-                Things to do nearby
-              </p>
-              <a
-                href={`https://www.getyourguide.com/s/?q=${encodeURIComponent(poi.name + " " + cityName)}&partner_id=${gygPartnerId}`}
-                target="_blank"
-                rel="noopener noreferrer sponsored"
-                className="flex items-center gap-3 p-3 rounded-xl"
-                style={{
-                  background: "var(--input-bg)",
-                  border: "1px solid var(--border)",
-                  textDecoration: "none",
-                  transition: "border-color 0.15s ease",
-                }}
-              >
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(255,168,0,0.12)", border: "1px solid rgba(255,168,0,0.25)" }}
-                >
-                  <span style={{ fontSize: "20px" }}>🎟</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p
-                    className="text-xs font-semibold"
-                    style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}
-                  >
-                    Tours &amp; Activities
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
-                    Experiences near {poi.name}
-                  </p>
-                </div>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--muted)", flexShrink: 0 }}>
-                  <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </a>
-            </div>
+          {/* GetYourGuide widget */}
+          {cityName && (
+            <GygWidgetSection
+              poiId={poi.placeId}
+              poiName={poi.name}
+              poiCategory={poi.category}
+              cityName={cityName}
+            />
           )}
 
           <div style={{ height: "24px" }} />

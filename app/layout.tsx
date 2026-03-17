@@ -33,6 +33,11 @@ export default function RootLayout({
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1534197495002044"
           crossOrigin="anonymous"
         />
+        <script
+          async
+          src="https://widget.getyourguide.com/dist/pa.umd.production.min.js"
+          data-gyg-partner-id="XHNEI9V"
+        />
       </head>
       <body className={`${pacifico.variable} ${dmSans.variable}`}>
         {children}
