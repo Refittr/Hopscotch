@@ -76,12 +76,26 @@ export default function POICard({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p
-          className="text-sm font-medium truncate leading-tight"
-          style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}
-        >
-          {poi.name}
-        </p>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <p
+            className="text-sm font-medium truncate leading-tight min-w-0"
+            style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}
+          >
+            {poi.name}
+          </p>
+          <span
+            className="flex-shrink-0 text-xs px-1.5 py-0.5 rounded-full"
+            style={{
+              background: "var(--border)",
+              color: "var(--muted)",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "9px",
+              letterSpacing: "0.04em",
+            }}
+          >
+            info
+          </span>
+        </div>
         <p
           className="text-xs mt-0.5"
           style={{
