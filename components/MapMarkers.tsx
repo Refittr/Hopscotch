@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { useMap } from "@vis.gl/react-google-maps";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
+import type { Cluster } from "@googlemaps/markerclusterer";
 import type { POI } from "@/types/poi";
 
 interface Props {
@@ -55,13 +57,34 @@ function shortlistIcon(highlighted: boolean): google.maps.Icon {
     <circle cx="${cx}" cy="${cx}" r="${r}" fill="#00F0FF"/>
     <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="#FF2D78" stroke-width="2.5"/>
   </svg>`;
-  const url = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
   return {
-    url,
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
     scaledSize: new google.maps.Size(size, size),
     anchor: new google.maps.Point(cx, cx),
   };
 }
+
+const clusterRenderer = {
+  render({ count, position }: Cluster): google.maps.Marker {
+    const size = count <= 10 ? 36 : count <= 25 ? 44 : 52;
+    const fontSize = count <= 10 ? 11 : count <= 25 ? 12 : 13;
+    const c = size / 2;
+    const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${c}" cy="${c}" r="${c - 1}" fill="#00F0FF" opacity="0.08"/>
+      <circle cx="${c}" cy="${c}" r="${c - 4}" fill="#1a1816" stroke="#00F0FF" stroke-width="1.5"/>
+      <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="#00F0FF" font-size="${fontSize}" font-family="sans-serif" font-weight="700">${count}</text>
+    </svg>`;
+    return new google.maps.Marker({
+      position,
+      icon: {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+        scaledSize: new google.maps.Size(size, size),
+        anchor: new google.maps.Point(c, c),
+      },
+      zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+    });
+  },
+};
 
 export default function MapMarkers({
   pois,
@@ -72,78 +95,110 @@ export default function MapMarkers({
   hideAll = false,
 }: Props) {
   const map = useMap();
-  const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
-  const onClickRef = useRef(onMarkerClick);
+  const browseMarkersRef   = useRef<Map<string, google.maps.Marker>>(new Map());
+  const shortlistMarkersRef = useRef<Map<string, google.maps.Marker>>(new Map());
+  const clustererRef       = useRef<MarkerClusterer | null>(null);
+  const onClickRef         = useRef(onMarkerClick);
 
   useEffect(() => { onClickRef.current = onMarkerClick; }, [onMarkerClick]);
 
-  // Create / remove markers — only for currently visible POIs (capped at 200)
+  // Initialise clusterer once map is ready
   useEffect(() => {
     if (!map) return;
+    const c = new MarkerClusterer({ map, markers: [], renderer: clusterRenderer });
+    clustererRef.current = c;
+    return () => {
+      c.clearMarkers();
+      clustererRef.current = null;
+    };
+  }, [map]);
+
+  // Create / remove markers whenever the visible set changes
+  useEffect(() => {
+    if (!map || !clustererRef.current) return;
+
+    // Wipe everything
+    clustererRef.current.clearMarkers(true);
+    for (const m of browseMarkersRef.current.values()) {
+      google.maps.event.clearListeners(m, "click");
+    }
+    browseMarkersRef.current.clear();
+
+    for (const m of shortlistMarkersRef.current.values()) {
+      m.setMap(null);
+      google.maps.event.clearListeners(m, "click");
+    }
+    shortlistMarkersRef.current.clear();
+
+    if (hideAll) {
+      clustererRef.current.render();
+      return;
+    }
 
     const poiMap = new Map(pois.map((p) => [p.placeId, p]));
-    const targetIds: Set<string> = new Set();
-    if (!hideAll) {
-      let count = 0;
-      for (const id of visibleIds) {
-        if (count >= 200) break;
-        if (poiMap.has(id)) { targetIds.add(id); count++; }
-      }
-      // Always include shortlisted
-      for (const id of shortlistIds) {
-        if (poiMap.has(id)) targetIds.add(id);
-      }
+    const newBrowseMarkers: google.maps.Marker[] = [];
+    let count = 0;
+
+    for (const id of visibleIds) {
+      if (count >= 200) break;
+      const poi = poiMap.get(id);
+      if (!poi || shortlistIds.has(id)) continue;
+      const m = new google.maps.Marker({
+        position: { lat: poi.lat, lng: poi.lng },
+        map: null, // clusterer manages placement
+        icon: browseIcon(false),
+        optimized: true,
+      });
+      m.addListener("click", () => onClickRef.current(id));
+      browseMarkersRef.current.set(id, m);
+      newBrowseMarkers.push(m);
+      count++;
     }
 
-    // Remove markers no longer needed
-    for (const [id, marker] of markersRef.current) {
-      if (!targetIds.has(id)) {
-        marker.setMap(null);
-        google.maps.event.clearListeners(marker, "click");
-        markersRef.current.delete(id);
-      }
-    }
-
-    // Create new markers
-    for (const id of targetIds) {
-      if (markersRef.current.has(id)) continue;
-      const poi = poiMap.get(id)!;
-      const isShortlisted = shortlistIds.has(poi.placeId);
-      const isHighlighted = poi.placeId === highlightedId;
-      const marker = new google.maps.Marker({
+    // Shortlisted markers — always unclustered
+    for (const id of shortlistIds) {
+      const poi = poiMap.get(id);
+      if (!poi) continue;
+      const m = new google.maps.Marker({
         position: { lat: poi.lat, lng: poi.lng },
         map,
-        visible: true,
-        icon: isShortlisted ? shortlistIcon(isHighlighted) : browseIcon(isHighlighted),
-        optimized: !isShortlisted,
-        zIndex: isShortlisted ? 10 : undefined,
+        icon: shortlistIcon(false),
+        optimized: false,
+        zIndex: 10,
       });
-      marker.addListener("click", () => onClickRef.current(poi.placeId));
-      markersRef.current.set(poi.placeId, marker);
+      m.addListener("click", () => onClickRef.current(id));
+      shortlistMarkersRef.current.set(id, m);
     }
+
+    clustererRef.current.addMarkers(newBrowseMarkers, true);
+    clustererRef.current.render();
   }, [map, pois, visibleIds, hideAll, shortlistIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update icons when shortlist or highlight changes
+  // Update icons when highlight / shortlist changes (lightweight)
   useEffect(() => {
-    for (const [id, marker] of markersRef.current) {
-      const isShortlisted = shortlistIds.has(id);
-      const isHighlighted = id === highlightedId;
-      marker.setIcon(
-        isShortlisted ? shortlistIcon(isHighlighted) : browseIcon(isHighlighted)
-      );
-      marker.setZIndex(isShortlisted ? 10 : isHighlighted ? 5 : undefined);
-      marker.setOptions({ optimized: !isShortlisted && !isHighlighted });
+    for (const [id, m] of browseMarkersRef.current) {
+      const h = id === highlightedId;
+      m.setIcon(browseIcon(h));
+      m.setOptions({ optimized: !h });
+    }
+    for (const [id, m] of shortlistMarkersRef.current) {
+      const h = id === highlightedId;
+      m.setIcon(shortlistIcon(h));
+      m.setZIndex(h ? 15 : 10);
     }
   }, [shortlistIds, highlightedId]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      for (const marker of markersRef.current.values()) {
-        marker.setMap(null);
-        google.maps.event.clearListeners(marker, "click");
+      clustererRef.current?.clearMarkers();
+      for (const m of [
+        ...browseMarkersRef.current.values(),
+        ...shortlistMarkersRef.current.values(),
+      ]) {
+        m.setMap(null);
+        google.maps.event.clearListeners(m, "click");
       }
-      markersRef.current.clear();
     };
   }, []);
 

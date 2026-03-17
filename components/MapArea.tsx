@@ -86,6 +86,62 @@ const DEFAULT_ZOOM = 2;
 const CITY_ZOOM = 13;
 
 
+function UserLocationLayer({ userLocation }: { userLocation: { lat: number; lng: number } | null }) {
+  const map = useMap();
+  const markerRef = useRef<google.maps.Marker | null>(null);
+  const circleRef = useRef<google.maps.Circle | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+    markerRef.current?.setMap(null);
+    circleRef.current?.setMap(null);
+    markerRef.current = null;
+    circleRef.current = null;
+    if (!userLocation) return;
+
+    const size = 28;
+    const c = size / 2;
+    const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${c}" cy="${c}" r="5" fill="none" stroke="#4A90E2" stroke-width="1.5">
+        <animate attributeName="r" from="5" to="13" dur="1.5s" repeatCount="indefinite"/>
+        <animate attributeName="stroke-opacity" from="0.9" to="0" dur="1.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="${c}" cy="${c}" r="6" fill="#4A90E2" stroke="white" stroke-width="2.5"/>
+    </svg>`;
+
+    markerRef.current = new google.maps.Marker({
+      position: userLocation,
+      map,
+      icon: {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+        scaledSize: new google.maps.Size(size, size),
+        anchor: new google.maps.Point(c, c),
+      },
+      zIndex: 999,
+    });
+
+    circleRef.current = new google.maps.Circle({
+      map,
+      center: userLocation,
+      radius: 2000,
+      fillColor: "#00F0FF",
+      fillOpacity: 0.05,
+      strokeColor: "#00F0FF",
+      strokeOpacity: 0.3,
+      strokeWeight: 1.5,
+    });
+
+    return () => {
+      markerRef.current?.setMap(null);
+      circleRef.current?.setMap(null);
+      markerRef.current = null;
+      circleRef.current = null;
+    };
+  }, [map, userLocation]);
+
+  return null;
+}
+
 function GestureEnabler({ mapRef }: { mapRef: React.MutableRefObject<google.maps.Map | null> }) {
   const map = useMap();
   useEffect(() => {
@@ -111,6 +167,7 @@ interface Props {
   shortlist: POI[];
   hoveredHopOptionId: string | null;
   suggestionPreviewPos: { lat: number; lng: number } | null;
+  userLocation: { lat: number; lng: number } | null;
 }
 
 export default function MapArea({
@@ -126,6 +183,7 @@ export default function MapArea({
   shortlist,
   hoveredHopOptionId,
   suggestionPreviewPos,
+  userLocation,
 }: Props) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -195,6 +253,7 @@ export default function MapArea({
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       >
         <GestureEnabler mapRef={mapRef} />
+        <UserLocationLayer userLocation={userLocation} />
         <MapMarkers
           pois={pois}
           visibleIds={visibleIds}

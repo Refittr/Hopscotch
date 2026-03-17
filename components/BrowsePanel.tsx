@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { POI } from "@/types/poi";
 import POICard from "./POICard";
+import { haversineKm } from "@/lib/routeUtils";
 
 interface Props {
   pois: POI[];
@@ -14,6 +15,9 @@ interface Props {
   onRemoveFromShortlist?: (placeId: string) => void;
   onHighlight: (placeId: string | null) => void;
   fullWidth?: boolean;
+  nearMe?: boolean;
+  onNearMeToggle?: () => void;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 function SkeletonCard() {
@@ -42,18 +46,32 @@ export default function BrowsePanel({
   onRemoveFromShortlist,
   onHighlight,
   fullWidth,
+  nearMe = false,
+  onNearMeToggle,
+  userLocation,
 }: Props) {
   const [search, setSearch] = useState("");
+
   const filtered = search.trim()
     ? pois.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     : pois;
+
+  const poisWithDist = useMemo(() => {
+    if (!nearMe || !userLocation) return filtered.map((p) => ({ poi: p, distMi: undefined as number | undefined }));
+    return [...filtered]
+      .map((p) => ({
+        poi: p,
+        distMi: haversineKm({ lat: p.lat, lng: p.lng }, userLocation) * 0.621371,
+      }))
+      .sort((a, b) => a.distMi - b.distMi);
+  }, [filtered, nearMe, userLocation]);
 
   return (
     <div
       className="flex flex-col h-full"
       style={{
         width: "100%",
-        maxWidth: fullWidth ? "100%" : "320px",
+        maxWidth: fullWidth ? "100%" : "400px",
         background: "var(--background)",
         borderRight: "1px solid var(--border)",
       }}
@@ -90,10 +108,31 @@ export default function BrowsePanel({
             {pois.length > 0 ? "loading more…" : "loading…"}
           </span>
         )}
+        <div className="flex-1" />
+        {onNearMeToggle && (
+          <button
+            onClick={onNearMeToggle}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium"
+            style={{
+              background: nearMe ? "rgba(74,144,226,0.15)" : "var(--input-bg)",
+              border: `1px solid ${nearMe ? "#4A90E2" : "var(--border)"}`,
+              color: nearMe ? "#4A90E2" : "var(--muted)",
+              fontFamily: "var(--font-dm-sans)",
+              boxShadow: nearMe ? "0 0 10px rgba(74,144,226,0.2)" : "none",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7.5 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+            </svg>
+            Near me
+          </button>
+        )}
       </div>
 
       {/* Search */}
-      {!isLoading && pois.length > 0 && (
+      {pois.length > 0 && (
         <div className="px-3 pt-3 pb-1 flex-shrink-0">
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-lg"
@@ -137,10 +176,7 @@ export default function BrowsePanel({
               <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
               <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <p
-              className="text-sm text-center"
-              style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
-            >
+            <p className="text-sm text-center" style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
               Search a city to<br />discover spots
             </p>
           </div>
@@ -148,10 +184,7 @@ export default function BrowsePanel({
 
         {!isLoading && hasCity && pois.length === 0 && (
           <div className="flex items-center justify-center h-full py-16">
-            <p
-              className="text-sm text-center"
-              style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
-            >
+            <p className="text-sm text-center" style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
               No spots match<br />the active filters
             </p>
           </div>
@@ -159,7 +192,7 @@ export default function BrowsePanel({
 
         {pois.length > 0 && (
           <div className="flex flex-col gap-2">
-            {filtered.map((poi, i) => (
+            {poisWithDist.map(({ poi, distMi }, i) => (
               <POICard
                 key={poi.placeId}
                 poi={poi}
@@ -169,6 +202,7 @@ export default function BrowsePanel({
                 onRemove={onRemoveFromShortlist}
                 onHighlight={onHighlight}
                 index={i}
+                distanceMi={distMi}
               />
             ))}
             <div style={{ height: "40px" }} />

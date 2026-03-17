@@ -24,6 +24,9 @@ interface Props {
   onReorderShortlist: (newList: POI[]) => void;
   onStartRoute: () => void;
   onHighlight: (placeId: string | null) => void;
+  nearMe: boolean;
+  onNearMeToggle: () => void;
+  userLocation: { lat: number; lng: number } | null;
 }
 
 export default function MobileSidebar(props: Props) {
@@ -33,7 +36,7 @@ export default function MobileSidebar(props: Props) {
   const [showHelp, setShowHelp] = useState(false);
   const [showContact, setShowContact] = useState(false);
 
-  const { filteredPois, isLoading, highlightedPoiId, selectedCity, shortlistIds, onAddToShortlist, onRemoveFromShortlist, onStartRoute, onHighlight } = props;
+  const { filteredPois, isLoading, highlightedPoiId, selectedCity, shortlistIds, onAddToShortlist, onRemoveFromShortlist, onStartRoute, onHighlight, nearMe, onNearMeToggle, userLocation } = props;
 
   return (
     <>
@@ -163,6 +166,9 @@ export default function MobileSidebar(props: Props) {
                 onRemoveFromShortlist={onRemoveFromShortlist}
                 onHighlight={onHighlight}
                 fullWidth
+                nearMe={nearMe}
+                onNearMeToggle={onNearMeToggle}
+                userLocation={userLocation}
               />
             )}
           </div>

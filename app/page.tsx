@@ -33,6 +33,31 @@ export default function Home() {
   const [showMaxToast, setShowMaxToast] = useState(false);
   const { toasts, push: pushToast, remove: removeToast } = useToasts();
 
+  // ── Near me ─────────────────────────────────────────────────────────────
+  const [nearMe, setNearMe] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  const handleNearMeToggle = useCallback(() => {
+    if (nearMe) {
+      setNearMe(false);
+      setUserLocation(null);
+      return;
+    }
+    if (!navigator.geolocation) {
+      pushToast("Geolocation not supported by your browser", "✕");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setNearMe(true);
+      },
+      () => {
+        pushToast("Enable location access in your browser settings to use this feature", "✕");
+      }
+    );
+  }, [nearMe, pushToast]);
+
   // ── Route state ─────────────────────────────────────────────────────────
   const [routeState, setRouteState] = useState<RouteState | null>(null);
   const [hoveredHopOptionId, setHoveredHopOptionId] = useState<string | null>(null);
@@ -406,6 +431,9 @@ export default function Home() {
     onReorderShortlist: handleReorderShortlist,
     onStartRoute: handleStartRoute,
     onHighlight: setHighlightedPoiId,
+    nearMe,
+    onNearMeToggle: handleNearMeToggle,
+    userLocation,
   };
 
   const mapArea = (
@@ -422,6 +450,7 @@ export default function Home() {
       shortlist={shortlist}
       hoveredHopOptionId={hoveredHopOptionId}
       suggestionPreviewPos={suggestionPreviewPos}
+      userLocation={userLocation}
     />
   );
 
@@ -459,6 +488,9 @@ export default function Home() {
                 onAddToShortlist={handleAddToShortlist}
                 onRemoveFromShortlist={handleRemoveFromShortlist}
                 onHighlight={setHighlightedPoiId}
+                nearMe={nearMe}
+                onNearMeToggle={handleNearMeToggle}
+                userLocation={userLocation}
               />
             </>
           )}

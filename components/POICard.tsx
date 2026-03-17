@@ -151,9 +151,10 @@ interface Props {
   onRemove?: (placeId: string) => void;
   onHighlight?: (placeId: string | null) => void;
   index?: number;
+  distanceMi?: number;
 }
 
-export default function POICard({ poi, highlighted, isShortlisted, onAdd, onRemove, onHighlight, index = 0 }: Props) {
+export default function POICard({ poi, highlighted, isShortlisted, onAdd, onRemove, onHighlight, index = 0, distanceMi }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -219,6 +220,11 @@ export default function POICard({ poi, highlighted, isShortlisted, onAdd, onRemo
           }}
         >
           {poi.category}
+          {distanceMi != null && (
+            <span style={{ color: "var(--muted)", marginLeft: "6px" }}>
+              · {distanceMi < 0.1 ? "< 0.1 mi" : `${distanceMi.toFixed(1)} mi`}
+            </span>
+          )}
         </p>
         {poi.rating != null && (
           <div className="flex items-center gap-1 mt-0.5">
