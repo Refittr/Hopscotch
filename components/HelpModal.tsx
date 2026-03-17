@@ -67,7 +67,7 @@ export default function HelpModal({ onClose }: Props) {
                 textShadow: "0 0 16px rgba(0,240,255,0.3)",
               }}
             >
-              Hopscotch
+              Hopspot
             </h2>
             <p
               className="mt-1 text-xs font-medium"

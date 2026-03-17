@@ -102,7 +102,7 @@ export default function Sidebar({
                 textShadow: "0 0 24px rgba(0, 240, 255, 0.35)",
               }}
             >
-              Hopscotch
+              Hopspot
             </h1>
             <p
               className="mt-1.5 text-xs font-medium"
@@ -125,7 +125,7 @@ export default function Sidebar({
               border: "1px solid var(--border)",
               flexShrink: 0,
             }}
-            title="How to use Hopscotch"
+            title="How to use Hopspot"
           >
             ?
           </button>

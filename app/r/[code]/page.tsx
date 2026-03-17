@@ -159,7 +159,7 @@ export default function SharedRoutePage() {
           {/* Header */}
           <div className="px-5 pt-6 pb-5" style={{ borderBottom: "1px solid #2e2b27" }}>
             <p style={{ fontFamily: "var(--font-display, cursive)", fontSize: "22px", color: "#00F0FF" }}>
-              Hopscotch
+              Hopspot
             </p>
             <p className="mt-1 text-xs" style={{ color: "#6b6560", letterSpacing: "0.2em" }}>
               SHARED ROUTE

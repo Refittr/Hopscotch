@@ -693,7 +693,7 @@ function googleMapsUrl(stops: ReturnType<typeof stopsFromHops>): string {
 }
 
 function copyText(hops: CompletedHop[], cityName: string): string {
-  const lines: string[] = [`🗺 Hopscotch route — ${cityName}`];
+  const lines: string[] = [`🗺 Hopspot route — ${cityName}`];
   const stops = stopsFromHops(hops);
   stops.forEach((stop, i) => {
     lines.push(`${i + 1}. ${stop.name}${i === 0 ? " (start)" : ""}`);
@@ -1010,7 +1010,7 @@ export default function RouteMode({
               textShadow: "0 0 16px rgba(0,240,255,0.3)",
             }}
           >
-            Hopscotch
+            Hopspot
           </span>
         </div>
       </div>

@@ -15,7 +15,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Hopscotch - City Explorer",
+  title: "Hopspot - City Explorer",
   description: "Explore cities, discover spots, build your route.",
 };
 

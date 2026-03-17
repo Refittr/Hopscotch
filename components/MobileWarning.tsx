@@ -20,7 +20,7 @@ export default function MobileWarning() {
         className="text-xs leading-snug"
         style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
       >
-        <span style={{ color: "var(--foreground)", fontWeight: 600 }}>Hopscotch works best on desktop.</span>
+        <span style={{ color: "var(--foreground)", fontWeight: 600 }}>Hopspot works best on desktop.</span>
         {" "}Mobile support is limited - for the full experience open it on a computer.
       </p>
       <button

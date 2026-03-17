@@ -53,7 +53,7 @@ export default function MobileSidebar(props: Props) {
           >
             <div className="flex items-center gap-3">
               <span style={{ fontFamily: "var(--font-display)", fontSize: "22px", color: "var(--accent)", textShadow: "0 0 16px rgba(0,240,255,0.3)" }}>
-                Hopscotch
+                Hopspot
               </span>
               <button
                 onClick={() => setShowHelp(true)}
@@ -186,7 +186,7 @@ export default function MobileSidebar(props: Props) {
               onClick={() => { if (filteredPois.length > 0) setTab("browse"); setExpanded(true); }}
             >
               <span style={{ fontFamily: "var(--font-display)", fontSize: "20px", color: "var(--accent)", flexShrink: 0, textShadow: "0 0 16px rgba(0,240,255,0.3)" }}>
-                Hopscotch
+                Hopspot
               </span>
               {selectedCity ? (
                 <span className="text-xs font-medium truncate" style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}>

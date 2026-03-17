@@ -91,7 +91,7 @@ export default function ContactModal({ onClose }: Props) {
         >
           <div>
             <h2 className="text-xl leading-none" style={{ fontFamily: "var(--font-display)", color: "var(--accent)", textShadow: "0 0 16px rgba(0,240,255,0.3)" }}>
-              Hopscotch
+              Hopspot
             </h2>
             <p className="mt-1 text-xs font-medium" style={{ color: "var(--muted)", letterSpacing: "0.18em", fontFamily: "var(--font-dm-sans)" }}>
               GET IN TOUCH
