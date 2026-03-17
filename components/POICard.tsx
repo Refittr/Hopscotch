@@ -240,6 +240,23 @@ export default function POICard({ poi, highlighted, isShortlisted, onAdd, onRemo
 
       <InfoTooltip poi={poi} index={index} />
 
+      {/* Google Maps link */}
+      <a
+        href={`https://www.google.com/maps/place/?q=place_id:${poi.placeId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ color: "var(--muted)", background: "var(--border)" }}
+        aria-label={`Open ${poi.name} in Google Maps`}
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M15 3h6v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M10 14L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </a>
+
       {/* Add / shortlisted button */}
       <button
         className="add-btn w-10 h-10 md:w-7 md:h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
