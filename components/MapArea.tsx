@@ -109,6 +109,9 @@ function UserLocationLayer({ userLocation }: { userLocation: { lat: number; lng:
       <circle cx="${c}" cy="${c}" r="6" fill="#4A90E2" stroke="white" stroke-width="2.5"/>
     </svg>`;
 
+    map.panTo(userLocation);
+    map.setZoom(14);
+
     markerRef.current = new google.maps.Marker({
       position: userLocation,
       map,
