@@ -120,6 +120,7 @@ export default function MapMarkers({
     // Wipe everything
     clustererRef.current.clearMarkers(true);
     for (const m of browseMarkersRef.current.values()) {
+      m.setMap(null); // also cleans up any extracted (highlighted) markers
       google.maps.event.clearListeners(m, "click");
     }
     browseMarkersRef.current.clear();
@@ -174,19 +175,37 @@ export default function MapMarkers({
     clustererRef.current.render();
   }, [map, pois, visibleIds, hideAll, shortlistIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update icons when highlight / shortlist changes (lightweight)
+  // Update icons — extract highlighted browse marker from clusterer so it's visible
   useEffect(() => {
+    if (!clustererRef.current) return;
+
+    const toAddBack: google.maps.Marker[] = [];
+    const toExtract: google.maps.Marker[] = [];
+
     for (const [id, m] of browseMarkersRef.current) {
       const h = id === highlightedId;
+      const extracted = m.getMap() !== null; // directly on map = was previously extracted
       m.setIcon(browseIcon(h));
       m.setOptions({ optimized: !h });
+      if (h && !extracted) {
+        toExtract.push(m);
+      } else if (!h && extracted) {
+        m.setMap(null);
+        toAddBack.push(m);
+      }
     }
+
+    if (toAddBack.length)  clustererRef.current.addMarkers(toAddBack, true);
+    if (toExtract.length)  clustererRef.current.removeMarkers(toExtract, true);
+    for (const m of toExtract) m.setMap(map!);
+    clustererRef.current.render();
+
     for (const [id, m] of shortlistMarkersRef.current) {
       const h = id === highlightedId;
       m.setIcon(shortlistIcon(h));
       m.setZIndex(h ? 15 : 10);
     }
-  }, [shortlistIds, highlightedId]);
+  }, [shortlistIds, highlightedId, map]);
 
   // Cleanup on unmount
   useEffect(() => {
