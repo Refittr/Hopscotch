@@ -200,6 +200,13 @@ export default function MapMarkers({
     for (const m of toExtract) m.setMap(map!);
     clustererRef.current.render();
 
+    // When returning a marker to the clusterer, Google Maps doesn't always
+    // repaint the cluster SVG overlays until the next user interaction.
+    // Triggering resize forces an immediate overlay repaint.
+    if (map && toAddBack.length > 0) {
+      google.maps.event.trigger(map, "resize");
+    }
+
     for (const [id, m] of shortlistMarkersRef.current) {
       const h = id === highlightedId;
       m.setIcon(shortlistIcon(h));
