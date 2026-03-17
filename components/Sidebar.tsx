@@ -115,20 +115,33 @@ export default function Sidebar({
               CITY EXPLORER
             </p>
           </div>
-          <button
-            onClick={() => setShowHelp(true)}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mt-1"
-            style={{
-              background: "var(--border)",
-              color: "var(--muted)",
-              fontFamily: "var(--font-dm-sans)",
-              border: "1px solid var(--border)",
-              flexShrink: 0,
-            }}
-            title="How to use Hopspot"
-          >
-            ?
-          </button>
+          <div className="flex items-center gap-1.5 mt-1">
+            <button
+              onClick={() => window.location.reload()}
+              className="w-7 h-7 rounded-full flex items-center justify-center"
+              style={{ background: "var(--border)", color: "var(--muted)", flexShrink: 0 }}
+              title="Reset"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 3v5h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button
+              onClick={() => setShowHelp(true)}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+              style={{
+                background: "var(--border)",
+                color: "var(--muted)",
+                fontFamily: "var(--font-dm-sans)",
+                border: "1px solid var(--border)",
+                flexShrink: 0,
+              }}
+              title="How to use Hopspot"
+            >
+              ?
+            </button>
+          </div>
         </div>
       )}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}

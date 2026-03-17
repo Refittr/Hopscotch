@@ -124,6 +124,9 @@ export default function Home() {
       setPois([]);
       setHighlightedPoiId(null);
       setActiveVibes(new Set());
+    } else {
+      // Pre-select popular filters so the map doesn't flood with every POI
+      setActiveVibes(new Set(["Historical", "Arts & Culture", "Outdoors", "Food"]));
     }
   }, []);
 

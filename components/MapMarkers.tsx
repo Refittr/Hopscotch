@@ -95,10 +95,11 @@ export default function MapMarkers({
   hideAll = false,
 }: Props) {
   const map = useMap();
-  const browseMarkersRef   = useRef<Map<string, google.maps.Marker>>(new Map());
+  const browseMarkersRef    = useRef<Map<string, google.maps.Marker>>(new Map());
   const shortlistMarkersRef = useRef<Map<string, google.maps.Marker>>(new Map());
-  const clustererRef       = useRef<MarkerClusterer | null>(null);
-  const onClickRef         = useRef(onMarkerClick);
+  const clustererRef        = useRef<MarkerClusterer | null>(null);
+  const highlightOverlayRef = useRef<google.maps.Marker | null>(null);
+  const onClickRef          = useRef(onMarkerClick);
 
   useEffect(() => { onClickRef.current = onMarkerClick; }, [onMarkerClick]);
 
@@ -141,7 +142,7 @@ export default function MapMarkers({
     let count = 0;
 
     for (const id of visibleIds) {
-      if (count >= 200) break;
+      if (count >= 120) break;
       const poi = poiMap.get(id);
       if (!poi || shortlistIds.has(id)) continue;
       const m = new google.maps.Marker({
@@ -175,49 +176,56 @@ export default function MapMarkers({
     clustererRef.current.render();
   }, [map, pois, visibleIds, hideAll, shortlistIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update icons — extract highlighted browse marker from clusterer so it's visible
+  // Update highlight — use a separate overlay marker so clusterer is never touched
   useEffect(() => {
-    if (!clustererRef.current) return;
+    if (!map) return;
 
-    const toAddBack: google.maps.Marker[] = [];
-    const toExtract: google.maps.Marker[] = [];
-
-    for (const [id, m] of browseMarkersRef.current) {
-      const h = id === highlightedId;
-      const extracted = m.getMap() !== null; // directly on map = was previously extracted
-      m.setIcon(browseIcon(h));
-      m.setOptions({ optimized: !h });
-      if (h && !extracted) {
-        toExtract.push(m);
-      } else if (!h && extracted) {
-        m.setMap(null);
-        toAddBack.push(m);
-      }
-    }
-
-    if (toAddBack.length)  clustererRef.current.addMarkers(toAddBack, true);
-    if (toExtract.length)  clustererRef.current.removeMarkers(toExtract, true);
-    for (const m of toExtract) m.setMap(map!);
-    clustererRef.current.render();
-
-    // When returning a marker to the clusterer, Google Maps doesn't always
-    // repaint the cluster SVG overlays until the next user interaction.
-    // Triggering resize forces an immediate overlay repaint.
-    if (map && toAddBack.length > 0) {
-      google.maps.event.trigger(map, "resize");
-    }
-
+    // Shortlist markers: update icon directly (they're always on the map)
     for (const [id, m] of shortlistMarkersRef.current) {
       const h = id === highlightedId;
       m.setIcon(shortlistIcon(h));
       m.setZIndex(h ? 15 : 10);
     }
-  }, [shortlistIds, highlightedId, map]);
+
+    // Browse markers stay in the clusterer untouched — just keep icons plain
+    for (const m of browseMarkersRef.current.values()) {
+      m.setIcon(browseIcon(false));
+      m.setOptions({ optimized: true });
+    }
+
+    if (!highlightedId) {
+      highlightOverlayRef.current?.setMap(null);
+      return;
+    }
+
+    // Find position from browse or shortlist marker
+    const pos =
+      browseMarkersRef.current.get(highlightedId)?.getPosition() ??
+      shortlistMarkersRef.current.get(highlightedId)?.getPosition() ??
+      null;
+
+    if (!pos) {
+      highlightOverlayRef.current?.setMap(null);
+      return;
+    }
+
+    // Create overlay once, reuse afterwards
+    if (!highlightOverlayRef.current) {
+      highlightOverlayRef.current = new google.maps.Marker({
+        optimized: false,
+        zIndex: Number(google.maps.Marker.MAX_ZINDEX) + 100,
+      });
+    }
+    highlightOverlayRef.current.setPosition(pos);
+    highlightOverlayRef.current.setIcon(browseIcon(true));
+    highlightOverlayRef.current.setMap(map);
+  }, [highlightedId, map, shortlistIds]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       clustererRef.current?.clearMarkers();
+      highlightOverlayRef.current?.setMap(null);
       for (const m of [
         ...browseMarkersRef.current.values(),
         ...shortlistMarkersRef.current.values(),
