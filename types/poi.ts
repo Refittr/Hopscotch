@@ -7,6 +7,7 @@ export interface POI {
   ratingsCount?: number;
   types: string[];
   category: string;
+  categories?: string[]; // mapped filter categories (v3+)
   photoUrl?: string;
   isOpen?: boolean;
   vicinity?: string;

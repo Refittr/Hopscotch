@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  Landmark, Palette, Utensils, Wine, ShoppingBag,
+  Trees, Users, Music2, Sparkles, Gem, ChevronDown,
+} from "lucide-react";
 import CitySearch from "./CitySearch";
 import MyListSection from "./MyListSection";
 import HelpModal from "./HelpModal";
@@ -8,14 +12,17 @@ import ContactModal from "./ContactModal";
 import type { SelectedCity } from "@/app/page";
 import type { POI } from "@/types/poi";
 
-const VIBES = [
-  { label: "Historical", emoji: "🏛️" },
-  { label: "Food & Drink", emoji: "🍷" },
-  { label: "Nightlife", emoji: "🌙" },
-  { label: "Culture", emoji: "🎭" },
-  { label: "Outdoors", emoji: "🌿" },
-  { label: "Family", emoji: "🎠" },
-  { label: "LGBT+", emoji: "🏳️‍🌈" },
+const VIBES: { label: string; Icon: React.ElementType }[] = [
+  { label: "Historical",                 Icon: Landmark  },
+  { label: "Arts & Culture",             Icon: Palette   },
+  { label: "Food",                       Icon: Utensils  },
+  { label: "Drinks & Nightlife",         Icon: Wine      },
+  { label: "Shopping",                   Icon: ShoppingBag },
+  { label: "Outdoors",                   Icon: Trees     },
+  { label: "Family",                     Icon: Users     },
+  { label: "Live Music & Entertainment", Icon: Music2    },
+  { label: "Wellness",                   Icon: Sparkles  },
+  { label: "Hidden Gems",                Icon: Gem       },
 ];
 
 interface Props {
@@ -56,6 +63,7 @@ export default function Sidebar({
   const [badgePulsing, setBadgePulsing] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [vibesOpen, setVibesOpen] = useState(true);
 
   useEffect(() => {
     if (shortlist.length > prevCountRef.current) {
@@ -130,32 +138,58 @@ export default function Sidebar({
       </div>
 
       {/* Vibe Filter Chips */}
-      <div className="px-4 pb-4">
-        <div className="flex flex-wrap gap-1.5">
-          {VIBES.map(({ label, emoji }) => {
-            const isActive = activeVibes.has(label);
-            return (
-              <button
-                key={label}
-                onClick={() => onVibeToggle(label)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer"
-                style={{
-                  background: isActive ? "var(--chip-active-bg)" : "var(--chip-bg)",
-                  border: isActive ? "1px solid var(--accent)" : "1px solid var(--border)",
-                  color: isActive ? "var(--accent)" : "var(--muted)",
-                  fontFamily: "var(--font-dm-sans)",
-                  boxShadow: isActive
-                    ? "0 0 0 2px rgba(0,240,255,0.1), 0 0 8px rgba(0,240,255,0.07)"
-                    : "none",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <span style={{ fontSize: "11px" }}>{emoji}</span>
-                <span>{label}</span>
-              </button>
-            );
-          })}
-        </div>
+      <div className="px-4 pb-3">
+        <button
+          onClick={() => setVibesOpen((v) => !v)}
+          className="flex items-center gap-1.5 mb-2"
+          style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
+        >
+          <span className="text-xs font-semibold uppercase tracking-widest">Filter</span>
+          {activeVibes.size > 0 && (
+            <span
+              className="text-xs px-1.5 py-0.5 rounded-full"
+              style={{ background: "var(--chip-active-bg)", color: "var(--accent)", border: "1px solid rgba(0,240,255,0.2)" }}
+            >
+              {activeVibes.size}
+            </span>
+          )}
+          <ChevronDown
+            size={13}
+            style={{
+              color: "var(--muted)",
+              transform: vibesOpen ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+              marginLeft: "auto",
+            }}
+          />
+        </button>
+        {vibesOpen && (
+          <div className="flex flex-wrap gap-1.5">
+            {VIBES.map(({ label, Icon }) => {
+              const isActive = activeVibes.has(label);
+              return (
+                <button
+                  key={label}
+                  onClick={() => onVibeToggle(label)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer"
+                  style={{
+                    background: isActive ? "var(--chip-active-bg)" : "var(--chip-bg)",
+                    border: isActive ? "1px solid var(--accent)" : "1px solid var(--border)",
+                    color: isActive ? "var(--accent)" : "var(--muted)",
+                    fontFamily: "var(--font-dm-sans)",
+                    boxShadow: isActive
+                      ? "0 0 0 2px rgba(0,240,255,0.1), 0 0 8px rgba(0,240,255,0.07)"
+                      : "none",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <Icon size={11} />
+                  <span>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Divider */}

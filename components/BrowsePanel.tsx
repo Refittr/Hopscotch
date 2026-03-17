@@ -69,7 +69,7 @@ export default function BrowsePanel({
         >
           Browse
         </span>
-        {!isLoading && pois.length > 0 && (
+        {pois.length > 0 && (
           <span
             className="text-xs px-2 py-0.5 rounded-full"
             style={{
@@ -87,7 +87,7 @@ export default function BrowsePanel({
             className="text-xs"
             style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
           >
-            loading…
+            {pois.length > 0 ? "loading more…" : "loading…"}
           </span>
         )}
       </div>
@@ -123,7 +123,7 @@ export default function BrowsePanel({
 
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto px-3 py-3 min-h-0">
-        {isLoading && (
+        {isLoading && pois.length === 0 && (
           <div className="flex flex-col gap-2">
             {Array.from({ length: 10 }).map((_, i) => (
               <SkeletonCard key={i} />
@@ -157,7 +157,7 @@ export default function BrowsePanel({
           </div>
         )}
 
-        {!isLoading && pois.length > 0 && (
+        {pois.length > 0 && (
           <div className="flex flex-col gap-2">
             {filtered.map((poi, i) => (
               <POICard

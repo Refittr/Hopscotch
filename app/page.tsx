@@ -77,7 +77,6 @@ export default function Home() {
 
   const handlePoisLoaded = useCallback((loaded: POI[]) => {
     setPois(loaded);
-    setHighlightedPoiId(null);
   }, []);
 
   const handleLoadingChange = useCallback((loading: boolean) => {

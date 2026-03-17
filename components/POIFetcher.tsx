@@ -42,27 +42,48 @@ export default function POIFetcher({ selectedCity, onPoisLoaded, onLoadingChange
 
     onLoadingChangeRef.current(true);
 
-    fetch("/api/places", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cityName: selectedCity.name,
-        lat:      selectedCity.lat,
-        lng:      selectedCity.lng,
-      }),
-      signal: controller.signal,
-    })
-      .then((res) => res.json())
-      .then((pois: POI[]) => {
-        onPoisLoadedRef.current(pois);
+    (async () => {
+      try {
+        const res = await fetch("/api/places", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cityName: selectedCity.name,
+            lat:      selectedCity.lat,
+            lng:      selectedCity.lng,
+          }),
+          signal: controller.signal,
+        });
+
+        const reader  = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer      = "";
+        let accumulated: POI[] = [];
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const batch = JSON.parse(line) as POI[];
+              accumulated = [...accumulated, ...batch];
+              onPoisLoadedRef.current(accumulated);
+            } catch { /* skip malformed line */ }
+          }
+        }
+
         onLoadingChangeRef.current(false);
-      })
-      .catch((err) => {
-        if (err.name === "AbortError") return;
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") return;
         console.error("[POIFetcher]", err);
         onPoisLoadedRef.current([]);
         onLoadingChangeRef.current(false);
-      });
+      }
+    })();
   }, [selectedCity]);
 
   return null;
