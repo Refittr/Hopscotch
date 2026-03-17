@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { POI } from "@/types/poi";
 import POICard from "./POICard";
+import POIDetailCard, { type PlaceDetails } from "./POIDetailCard";
 import { haversineKm } from "@/lib/routeUtils";
 
 interface Props {
@@ -18,6 +19,8 @@ interface Props {
   nearMe?: boolean;
   onNearMeToggle?: () => void;
   userLocation?: { lat: number; lng: number } | null;
+  onPoiClick?: (poi: POI) => void;
+  cityName?: string;
 }
 
 function SkeletonCard() {
@@ -49,8 +52,13 @@ export default function BrowsePanel({
   nearMe = false,
   onNearMeToggle,
   userLocation,
+  onPoiClick,
+  cityName,
 }: Props) {
   const [search, setSearch] = useState("");
+  const [selectedPoi, setSelectedPoi] = useState<POI | null>(null);
+  const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
+  const detailsCache = useRef<Map<string, PlaceDetails>>(new Map());
 
   const filtered = search.trim()
     ? pois.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
@@ -66,9 +74,41 @@ export default function BrowsePanel({
       .sort((a, b) => a.distMi - b.distMi);
   }, [filtered, nearMe, userLocation]);
 
+  const handleOpenDetail = async (poi: POI) => {
+    // Pan the map
+    onPoiClick?.(poi);
+    // Open panel immediately (will show loading state)
+    setSelectedPoi(poi);
+
+    // Serve from cache if available
+    if (detailsCache.current.has(poi.placeId)) return;
+
+    setLoadingDetailId(poi.placeId);
+    try {
+      const res = await fetch(`/api/place-details?placeId=${encodeURIComponent(poi.placeId)}`);
+      const data: PlaceDetails = await res.json();
+      detailsCache.current.set(poi.placeId, data);
+    } catch {
+      detailsCache.current.set(poi.placeId, {
+        description: null,
+        photos: [],
+        openNow: null,
+        weekdayText: null,
+        reviewSnippet: null,
+      });
+    } finally {
+      setLoadingDetailId(null);
+    }
+  };
+
+  const getDistMi = (placeId: string): number | undefined => {
+    const entry = poisWithDist.find((e) => e.poi.placeId === placeId);
+    return entry?.distMi;
+  };
+
   return (
     <div
-      className="flex flex-col h-full"
+      className="flex flex-col h-full relative"
       style={{
         width: "100%",
         maxWidth: fullWidth ? "100%" : "400px",
@@ -101,10 +141,7 @@ export default function BrowsePanel({
           </span>
         )}
         {isLoading && (
-          <span
-            className="text-xs"
-            style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
-          >
+          <span className="text-xs" style={{ color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
             {pois.length > 0 ? "loading more…" : "loading…"}
           </span>
         )}
@@ -203,12 +240,28 @@ export default function BrowsePanel({
                 onHighlight={onHighlight}
                 index={i}
                 distanceMi={distMi}
+                onOpenDetail={handleOpenDetail}
               />
             ))}
             <div style={{ height: "40px" }} />
           </div>
         )}
       </div>
+
+      {/* Detail card overlay */}
+      {selectedPoi && (
+        <POIDetailCard
+          poi={selectedPoi}
+          details={detailsCache.current.get(selectedPoi.placeId) ?? null}
+          isLoadingDetails={loadingDetailId === selectedPoi.placeId}
+          isShortlisted={shortlistIds.has(selectedPoi.placeId)}
+          distanceMi={getDistMi(selectedPoi.placeId)}
+          cityName={cityName}
+          onClose={() => setSelectedPoi(null)}
+          onAdd={onAddToShortlist}
+          onRemove={(id) => onRemoveFromShortlist?.(id)}
+        />
+      )}
     </div>
   );
 }

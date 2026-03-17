@@ -145,15 +145,19 @@ function UserLocationLayer({ userLocation }: { userLocation: { lat: number; lng:
   return null;
 }
 
-function GestureEnabler({ mapRef }: { mapRef: React.MutableRefObject<google.maps.Map | null> }) {
+function GestureEnabler({ mapRef, onReady }: {
+  mapRef: React.MutableRefObject<google.maps.Map | null>;
+  onReady?: (panTo: (lat: number, lng: number) => void) => void;
+}) {
   const map = useMap();
   useEffect(() => {
     if (!map) return;
     mapRef.current = map;
     map.setOptions({ gestureHandling: "greedy", draggable: true });
     google.maps.event.trigger(map, "resize");
+    onReady?.((lat, lng) => map.panTo({ lat, lng }));
     return () => { mapRef.current = null; };
-  }, [map, mapRef]);
+  }, [map, mapRef, onReady]);
   return null;
 }
 
@@ -171,6 +175,7 @@ interface Props {
   hoveredHopOptionId: string | null;
   suggestionPreviewPos: { lat: number; lng: number } | null;
   userLocation: { lat: number; lng: number } | null;
+  onReady?: (panTo: (lat: number, lng: number) => void) => void;
 }
 
 export default function MapArea({
@@ -187,6 +192,7 @@ export default function MapArea({
   hoveredHopOptionId,
   suggestionPreviewPos,
   userLocation,
+  onReady,
 }: Props) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -255,7 +261,7 @@ export default function MapArea({
         styles={DARK_MAP_STYLES}
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       >
-        <GestureEnabler mapRef={mapRef} />
+        <GestureEnabler mapRef={mapRef} onReady={onReady} />
         <UserLocationLayer userLocation={userLocation} />
         <MapMarkers
           pois={pois}

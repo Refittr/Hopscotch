@@ -63,6 +63,16 @@ export default function Home() {
   const [hoveredHopOptionId, setHoveredHopOptionId] = useState<string | null>(null);
   const [suggestionPreviewPos, setSuggestionPreviewPos] = useState<{ lat: number; lng: number } | null>(null);
   const aiCallKeyRef = useRef<string>("");
+  const mapPanToRef  = useRef<((lat: number, lng: number) => void) | null>(null);
+
+  const handleMapReady = useCallback((panTo: (lat: number, lng: number) => void) => {
+    mapPanToRef.current = panTo;
+  }, []);
+
+  const handlePoiCardClick = useCallback((poi: POI) => {
+    setHighlightedPoiId(poi.placeId);
+    mapPanToRef.current?.(poi.lat, poi.lng);
+  }, []);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
@@ -434,6 +444,8 @@ export default function Home() {
     nearMe,
     onNearMeToggle: handleNearMeToggle,
     userLocation,
+    onPoiClick: handlePoiCardClick,
+    cityName: selectedCity?.name,
   };
 
   const mapArea = (
@@ -451,6 +463,7 @@ export default function Home() {
       hoveredHopOptionId={hoveredHopOptionId}
       suggestionPreviewPos={suggestionPreviewPos}
       userLocation={userLocation}
+      onReady={handleMapReady}
     />
   );
 
@@ -491,6 +504,8 @@ export default function Home() {
                 nearMe={nearMe}
                 onNearMeToggle={handleNearMeToggle}
                 userLocation={userLocation}
+                onPoiClick={handlePoiCardClick}
+                cityName={selectedCity?.name}
               />
             </>
           )}

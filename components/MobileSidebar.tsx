@@ -27,6 +27,8 @@ interface Props {
   nearMe: boolean;
   onNearMeToggle: () => void;
   userLocation: { lat: number; lng: number } | null;
+  onPoiClick?: (poi: POI) => void;
+  cityName?: string;
 }
 
 export default function MobileSidebar(props: Props) {
@@ -36,7 +38,7 @@ export default function MobileSidebar(props: Props) {
   const [showHelp, setShowHelp] = useState(false);
   const [showContact, setShowContact] = useState(false);
 
-  const { filteredPois, isLoading, highlightedPoiId, selectedCity, shortlistIds, onAddToShortlist, onRemoveFromShortlist, onStartRoute, onHighlight, nearMe, onNearMeToggle, userLocation } = props;
+  const { filteredPois, isLoading, highlightedPoiId, selectedCity, shortlistIds, onAddToShortlist, onRemoveFromShortlist, onStartRoute, onHighlight, nearMe, onNearMeToggle, userLocation, onPoiClick, cityName } = props;
 
   return (
     <>
@@ -169,6 +171,8 @@ export default function MobileSidebar(props: Props) {
                 nearMe={nearMe}
                 onNearMeToggle={onNearMeToggle}
                 userLocation={userLocation}
+                onPoiClick={onPoiClick}
+                cityName={cityName ?? selectedCity?.name}
               />
             )}
           </div>
