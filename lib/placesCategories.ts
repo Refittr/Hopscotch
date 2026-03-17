@@ -21,7 +21,8 @@ export const TEXT_SEARCHES: { query: string; tag: string }[] = [
   { query: "off the beaten path",  tag: "hidden_gem"  },
   { query: "comedy clubs",         tag: "comedy"      },
   { query: "gardens",              tag: "garden"      },
-  { query: "LGBT bar gay bar queer venue", tag: "lgbtq" },
+  { query: "gay bar",                   tag: "lgbtq"  },
+  { query: "LGBT venue",               tag: "lgbtq"  },
 ];
 
 // ── Vibe chip definitions ─────────────────────────────────────────────────────

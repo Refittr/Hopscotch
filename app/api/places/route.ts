@@ -32,7 +32,7 @@ import { NEARBY_TYPES, TEXT_SEARCHES, getCategoryLabel, getCategories } from "@/
 const CACHE_TTL_MS   = 24 * 60 * 60 * 1000;
 const CLEANUP_AGE_MS = 7  * 24 * 60 * 60 * 1000;
 const RADIUS         = 5000;
-const CACHE_VERSION  = "v3";
+const CACHE_VERSION  = "v4";
 const BATCH_SIZE     = 4;
 const BATCH_DELAY_MS = 250;
 
