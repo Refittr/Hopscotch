@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { POI } from "@/types/poi";
 import POICard from "./POICard";
 import POIDetailCard, { type PlaceDetails } from "./POIDetailCard";
@@ -65,18 +65,35 @@ export default function BrowsePanel({
     : pois;
 
   const poisWithDist = useMemo(() => {
-    if (!nearMe || !userLocation) return filtered.map((p) => ({ poi: p, distMi: undefined as number | undefined }));
+    if (nearMe && userLocation) {
+      return [...filtered]
+        .map((p) => ({
+          poi: p,
+          distMi: haversineKm({ lat: p.lat, lng: p.lng }, userLocation) * 0.621371,
+        }))
+        .sort((a, b) => a.distMi - b.distMi);
+    }
+    // Sort by popularity: rating × log10(reviewCount + 10), no-rating places sink to bottom
     return [...filtered]
-      .map((p) => ({
-        poi: p,
-        distMi: haversineKm({ lat: p.lat, lng: p.lng }, userLocation) * 0.621371,
-      }))
-      .sort((a, b) => a.distMi - b.distMi);
+      .map((p) => ({ poi: p, distMi: undefined as number | undefined }))
+      .sort((a, b) => {
+        const score = (poi: typeof a.poi) =>
+          poi.rating != null
+            ? poi.rating * Math.log10((poi.ratingsCount ?? 0) + 10)
+            : -1;
+        return score(b.poi) - score(a.poi);
+      });
   }, [filtered, nearMe, userLocation]);
 
+  // While detail panel is open, prevent the highlight from being cleared
+  const handleHighlight = useCallback((placeId: string | null) => {
+    onHighlight(placeId ?? selectedPoi?.placeId ?? null);
+  }, [onHighlight, selectedPoi]);
+
   const handleOpenDetail = async (poi: POI) => {
-    // Pan the map
+    // Pan the map + set highlight
     onPoiClick?.(poi);
+    onHighlight(poi.placeId);
     // Open panel immediately (will show loading state)
     setSelectedPoi(poi);
 
@@ -237,7 +254,7 @@ export default function BrowsePanel({
                 isShortlisted={shortlistIds.has(poi.placeId)}
                 onAdd={onAddToShortlist}
                 onRemove={onRemoveFromShortlist}
-                onHighlight={onHighlight}
+                onHighlight={handleHighlight}
                 index={i}
                 distanceMi={distMi}
                 onOpenDetail={handleOpenDetail}
@@ -257,7 +274,7 @@ export default function BrowsePanel({
           isShortlisted={shortlistIds.has(selectedPoi.placeId)}
           distanceMi={getDistMi(selectedPoi.placeId)}
           cityName={cityName}
-          onClose={() => setSelectedPoi(null)}
+          onClose={() => { setSelectedPoi(null); onHighlight(null); }}
           onAdd={onAddToShortlist}
           onRemove={(id) => onRemoveFromShortlist?.(id)}
         />
