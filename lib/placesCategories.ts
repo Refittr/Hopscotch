@@ -21,6 +21,7 @@ export const TEXT_SEARCHES: { query: string; tag: string }[] = [
   { query: "off the beaten path",  tag: "hidden_gem"  },
   { query: "comedy clubs",         tag: "comedy"      },
   { query: "gardens",              tag: "garden"      },
+  { query: "LGBT bar gay bar queer venue", tag: "lgbtq" },
 ];
 
 // ── Vibe chip definitions ─────────────────────────────────────────────────────
@@ -78,6 +79,11 @@ export const VIBE_CONFIG: Record<string, {
     emoji: "💎",
     nearbyTypes: [],
     textTags: ["hidden_gem"],
+  },
+  "LGBT+": {
+    emoji: "🏳️‍🌈",
+    nearbyTypes: [],
+    textTags: ["lgbtq"],
   },
 };
 

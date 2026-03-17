@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Landmark, Palette, Utensils, Wine, ShoppingBag,
-  Trees, Users, Music2, Sparkles, Gem, ChevronDown,
+  Trees, Users, Music2, Sparkles, Gem, Rainbow, ChevronDown,
 } from "lucide-react";
 import CitySearch from "./CitySearch";
 import MyListSection from "./MyListSection";
@@ -23,6 +23,7 @@ const VIBES: { label: string; Icon: React.ElementType }[] = [
   { label: "Live Music & Entertainment", Icon: Music2    },
   { label: "Wellness",                   Icon: Sparkles  },
   { label: "Hidden Gems",                Icon: Gem       },
+  { label: "LGBT+",                      Icon: Rainbow   },
 ];
 
 interface Props {
