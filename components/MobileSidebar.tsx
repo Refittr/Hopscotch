@@ -108,7 +108,7 @@ export default function MobileSidebar(props: Props) {
                 border: "1px solid rgba(0,240,255,0.35)",
                 boxShadow: "0 0 18px rgba(0,240,255,0.3)",
                 borderRadius: "999px",
-                padding: "7px 24px",
+                padding: "4px 12px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -117,8 +117,8 @@ export default function MobileSidebar(props: Props) {
               aria-label={expanded ? "Collapse" : "Expand"}
             >
               <svg
-                width="20"
-                height="20"
+                width="12"
+                height="12"
                 viewBox="0 0 24 24"
                 fill="none"
                 style={{

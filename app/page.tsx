@@ -542,7 +542,7 @@ export default function Home() {
               flexShrink: 0,
               position: "relative",
               overflow: "clip",
-              height: sheetExpanded ? "25vh" : "calc(100vh - 160px)",
+              height: sheetExpanded ? "calc(25vh - 30px)" : "calc(100vh - 160px)",
               transition: "height 300ms ease-out",
             }}
           >
@@ -554,7 +554,7 @@ export default function Home() {
               overflow: "clip",
               display: "flex",
               flexDirection: "column",
-              height: sheetExpanded ? "75vh" : "160px",
+              height: sheetExpanded ? "calc(75vh + 30px)" : "160px",
               transition: "height 300ms ease-out",
             }}
           >
