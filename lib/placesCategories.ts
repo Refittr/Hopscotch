@@ -28,7 +28,11 @@ export const TEXT_SEARCHES: { query: string; tag: string }[] = [
   { query: "food halls",           tag: "food_hall"   },
   { query: "rooftop bars",         tag: "rooftop"     },
   { query: "best restaurants",     tag: "restaurant"  },
-  { query: "new openings",         tag: "new_opening" },
+  { query: "new openings",         tag: "new_opening"  },
+  { query: "cocktail bars",        tag: "bar"          },
+  { query: "entertainment venues", tag: "things_to_do" },
+  { query: "social clubs",         tag: "things_to_do" },
+  { query: "independent bars",     tag: "bar"          },
 ];
 
 // ── Vibe chip definitions ─────────────────────────────────────────────────────
