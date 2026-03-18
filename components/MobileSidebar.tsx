@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Sidebar from "./Sidebar";
 import BrowsePanel from "./BrowsePanel";
 import HelpModal from "./HelpModal";
@@ -29,225 +29,251 @@ interface Props {
   userLocation: { lat: number; lng: number } | null;
   onPoiClick?: (poi: POI) => void;
   cityName?: string;
+  expanded: boolean;
+  onExpandedChange: (v: boolean) => void;
 }
 
 export default function MobileSidebar(props: Props) {
-  const [expanded, setExpanded] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
+  const {
+    expanded, onExpandedChange,
+    filteredPois, isLoading, selectedCity,
+    shortlistIds, onAddToShortlist, onRemoveFromShortlist,
+    onHighlight, nearMe, onNearMeToggle, userLocation, onPoiClick, cityName,
+  } = props;
+
   const [tab, setTab] = useState<"controls" | "browse">("controls");
   const [showHelp, setShowHelp] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
-  const { filteredPois, isLoading, highlightedPoiId, selectedCity, shortlistIds, onAddToShortlist, onRemoveFromShortlist, onStartRoute, onHighlight, nearMe, onNearMeToggle, userLocation, onPoiClick, cityName } = props;
+  // Refs for stale-closure-free handlers
+  const expandedRef = useRef(expanded);
+  const detailOpenRef = useRef(detailOpen);
+  useEffect(() => { expandedRef.current = expanded; }, [expanded]);
+  useEffect(() => { detailOpenRef.current = detailOpen; }, [detailOpen]);
+
+  // Push history state when sheet expands
+  const didPushRef = useRef(false);
+  useEffect(() => {
+    if (expanded && !didPushRef.current) {
+      history.pushState({ hopspot: "sheet" }, "");
+      didPushRef.current = true;
+    } else if (!expanded) {
+      didPushRef.current = false;
+    }
+  }, [expanded]);
+
+  // Back button: collapse sheet (only if detail card is not handling it)
+  useEffect(() => {
+    const handler = () => {
+      if (expandedRef.current && !detailOpenRef.current) {
+        onExpandedChange(false);
+      }
+    };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, [onExpandedChange]);
+
+  const toggle = () => {
+    if (!expanded) {
+      if (filteredPois.length > 0) setTab("browse");
+      onExpandedChange(true);
+    } else {
+      onExpandedChange(false);
+    }
+  };
 
   return (
     <>
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
 
-      {/* Expanded: fills 62vh panel or fullscreen */}
-      {expanded && (
-        <div className={fullscreen ? "fixed inset-0 z-50 flex flex-col" : "flex flex-col h-full"} style={{ background: "var(--sidebar-bg)" }}>
-          {/* Header */}
+      <div
+        className="flex flex-col h-full"
+        style={{
+          background: "var(--sidebar-bg)",
+          borderTop: "1px solid var(--border)",
+          borderRadius: "16px 16px 0 0",
+          overflow: "hidden",
+        }}
+      >
+        {/* ── Handle ── */}
+        <div className="flex-shrink-0">
+          {/* Centered expand/collapse arrow pill */}
+          <div className="flex items-center justify-center" style={{ paddingTop: "10px", paddingBottom: "6px" }}>
+            <button
+              onClick={toggle}
+              style={{
+                background: "var(--accent-dim)",
+                border: "1px solid rgba(0,240,255,0.35)",
+                boxShadow: "0 0 18px rgba(0,240,255,0.3)",
+                borderRadius: "999px",
+                padding: "7px 24px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                touchAction: "manipulation",
+              }}
+              aria-label={expanded ? "Collapse" : "Expand"}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                style={{
+                  color: "var(--accent)",
+                  transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 300ms ease-out",
+                }}
+              >
+                <path d="M5 15l7-7 7 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Info bar */}
           <div
-            className="flex items-center justify-between px-5 flex-shrink-0"
-            style={{ paddingTop: "18px", paddingBottom: "16px", borderBottom: "1px solid var(--border)" }}
+            className="flex items-center px-4 w-full"
+            style={{ paddingBottom: "10px" }}
           >
-            <div className="flex items-center gap-3">
-              <span style={{ fontFamily: "var(--font-display)", fontSize: "22px", color: "var(--accent)", textShadow: "0 0 16px rgba(0,240,255,0.3)" }}>
-                Hopspot
-              </span>
-              <button
-                onClick={() => window.location.reload()}
-                className="w-6 h-6 rounded-full flex items-center justify-center"
-                style={{ background: "var(--border)", color: "var(--muted)", flexShrink: 0 }}
-                title="Reset"
-              >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M3 3v5h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              <button
-                onClick={() => setShowHelp(true)}
-                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                style={{ background: "var(--border)", color: "var(--muted)", fontFamily: "var(--font-dm-sans)", flexShrink: 0 }}
-              >
-                ?
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setFullscreen(f => !f)}
-                className="w-9 h-9 rounded-full flex items-center justify-center"
-                style={{ background: "var(--border)" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ color: "var(--muted)" }}>
-                  {fullscreen
-                    ? <path d="M8 3v5H3M21 8h-5V3M16 21v-5h5M3 16h5v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    : <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  }
-                </svg>
-              </button>
-              <button
-                onClick={() => { setExpanded(false); setFullscreen(false); }}
-                className="w-9 h-9 rounded-full flex items-center justify-center"
-                style={{ background: "var(--border)" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 12 12" fill="none" style={{ color: "var(--muted)" }}>
-                  <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex flex-shrink-0 gap-2 mx-4 mt-3 mb-2">
             <button
-              onClick={() => setTab("browse")}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all"
-              style={{
-                background: tab === "browse" ? "var(--accent-dim)" : "var(--input-bg)",
-                border: tab === "browse" ? "1px solid var(--accent)" : "1px solid var(--border)",
-                boxShadow: tab === "browse" ? "0 0 12px rgba(0,240,255,0.15)" : "none",
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ color: tab === "browse" ? "var(--accent)" : "var(--muted)", flexShrink: 0 }}>
-                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8"/>
-                <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              </svg>
-              <span className="text-sm font-semibold" style={{ color: tab === "browse" ? "var(--accent)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
-                Browse
-              </span>
-              {!isLoading && filteredPois.length > 0 && (
-                <span className="text-xs px-1.5 py-0.5 rounded-full" style={{
-                  background: tab === "browse" ? "rgba(0,240,255,0.15)" : "var(--border)",
-                  color: tab === "browse" ? "var(--accent)" : "var(--muted)",
-                  fontFamily: "var(--font-dm-sans)",
-                }}>
-                  {filteredPois.length}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setTab("controls")}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all"
-              style={{
-                background: tab === "controls" ? "rgba(255,45,120,0.1)" : "var(--input-bg)",
-                border: tab === "controls" ? "1px solid var(--accent-secondary)" : "1px solid var(--border)",
-                boxShadow: tab === "controls" ? "0 0 12px rgba(255,45,120,0.15)" : "none",
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ color: tab === "controls" ? "var(--accent-secondary)" : "var(--muted)", flexShrink: 0 }}>
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="1.8"/>
-                <path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              </svg>
-              <span className="text-sm font-semibold" style={{ color: tab === "controls" ? "var(--accent-secondary)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
-                My List
-              </span>
-              {props.shortlist.length > 0 && (
-                <span className="text-xs px-1.5 py-0.5 rounded-full" style={{
-                  background: tab === "controls" ? "rgba(255,45,120,0.2)" : "var(--border)",
-                  color: tab === "controls" ? "var(--accent-secondary)" : "var(--muted)",
-                  fontFamily: "var(--font-dm-sans)",
-                }}>
-                  {props.shortlist.length}
-                </span>
-              )}
-            </button>
-          </div>
-
-          <div className="flex-1 min-h-0 flex flex-col overflow-y-auto">
-            {tab === "controls" ? (
-              <>
-                <Sidebar {...props} hideHeader scrollable onBrowse={() => setTab("browse")} />
-                <div className="px-4 pt-2 pb-2 flex-shrink-0">
-                  <AdUnit slot="2261277039" format="horizontal" />
-                </div>
-                <div style={{ height: "24px", flexShrink: 0 }} />
-              </>
-            ) : (
-              <BrowsePanel
-                pois={filteredPois}
-                isLoading={isLoading}
-                highlightedPoiId={highlightedPoiId}
-                hasCity={selectedCity != null}
-                shortlistIds={shortlistIds}
-                onAddToShortlist={onAddToShortlist}
-                onRemoveFromShortlist={onRemoveFromShortlist}
-                onHighlight={onHighlight}
-                fullWidth
-                nearMe={nearMe}
-                onNearMeToggle={onNearMeToggle}
-                userLocation={userLocation}
-                onPoiClick={onPoiClick}
-                cityName={cityName ?? selectedCity?.name}
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Collapsed: plain in-flow panel, no absolute/fixed */}
-      {!expanded && (
-        <div className="flex flex-col h-full" style={{ background: "var(--sidebar-bg)", borderTop: "1px solid var(--border)" }}>
-          {/* Handle bar */}
-          <div className="flex items-center px-4 w-full flex-shrink-0" style={{ paddingTop: "12px", paddingBottom: "12px", borderBottom: "1px solid var(--border)" }}>
-            <button
-              className="flex items-center gap-3 min-w-0 flex-1"
+              className="flex items-center gap-2 min-w-0 flex-1"
               style={{ touchAction: "manipulation" }}
-              onClick={() => { if (filteredPois.length > 0) setTab("browse"); setExpanded(true); }}
+              onClick={() => { if (!expanded) toggle(); }}
             >
-              <span style={{ fontFamily: "var(--font-display)", fontSize: "20px", color: "var(--accent)", flexShrink: 0, textShadow: "0 0 16px rgba(0,240,255,0.3)" }}>
+              <span style={{ fontFamily: "var(--font-display)", fontSize: "18px", color: "var(--accent)", flexShrink: 0, textShadow: "0 0 16px rgba(0,240,255,0.3)" }}>
                 Hopspot
               </span>
               {selectedCity ? (
                 <span className="text-xs font-medium truncate" style={{ color: "var(--foreground)", fontFamily: "var(--font-dm-sans)" }}>
                   {selectedCity.name}
                   {!isLoading && filteredPois.length > 0 && (
-                    <span style={{ color: "var(--muted)" }}> · {filteredPois.length} spots</span>
+                    <span style={{ color: "var(--muted)" }}> · {filteredPois.length}</span>
                   )}
-                  {isLoading && (
-                    <span style={{ color: "var(--muted)" }}> · loading…</span>
-                  )}
+                  {isLoading && <span style={{ color: "var(--muted)" }}> · loading…</span>}
                 </span>
               ) : (
-                <span className="text-xs font-medium" style={{ color: "var(--muted)", letterSpacing: "0.2em", fontFamily: "var(--font-dm-sans)" }}>
+                <span className="text-xs font-medium" style={{ color: "var(--muted)", letterSpacing: "0.15em", fontFamily: "var(--font-dm-sans)" }}>
                   CITY EXPLORER
                 </span>
               )}
             </button>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button onClick={() => setShowContact(true)} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "var(--border)", color: "var(--muted)" }} aria-label="Contact">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M2 6l10 7 10-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </button>
               <button
-                onClick={() => { if (filteredPois.length > 0) setTab("browse"); setExpanded(true); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0"
-                style={{ background: selectedCity && !isLoading ? "var(--accent-dim)" : "var(--border)", border: selectedCity && !isLoading ? "1px solid var(--accent)" : "1px solid transparent", boxShadow: selectedCity && !isLoading ? "0 0 10px rgba(0,240,255,0.2)" : "none", transition: "all 0.2s ease" }}
+                onClick={() => setShowContact(true)}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: "var(--border)", color: "var(--muted)" }}
+                aria-label="Contact"
               >
-                <span className="text-xs font-semibold" style={{ color: selectedCity && !isLoading ? "var(--accent)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
-                  {selectedCity && !isLoading ? "Browse" : "Explore"}
-                </span>
-                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ color: selectedCity && !isLoading ? "var(--accent)" : "var(--muted)" }}>
-                  <path d="M2 8L6 4L10 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                  <path d="M2 6l10 7 10-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: "var(--border)", color: "var(--muted)" }}
+                title="Reset"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 3v5h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setShowHelp(true)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                style={{ background: "var(--border)", color: "var(--muted)", fontFamily: "var(--font-dm-sans)" }}
+              >
+                ?
+              </button>
             </div>
-          </div>
-
-          {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto px-4 min-h-0">
-            <Sidebar {...props} hideHeader scrollable onBrowse={() => { setTab("browse"); setExpanded(true); }} />
-            <div className="pt-3 pb-2">
-              <AdUnit slot="2261277039" format="horizontal" />
-            </div>
-            <div style={{ height: "16px", flexShrink: 0 }} />
           </div>
         </div>
-      )}
+
+        {/* ── Tabs ── */}
+        <div className="flex flex-shrink-0 gap-2 mx-4 mb-2">
+          <button
+            onClick={() => setTab("browse")}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all"
+            style={{
+              background: tab === "browse" ? "var(--accent-dim)" : "var(--input-bg)",
+              border: tab === "browse" ? "1px solid var(--accent)" : "1px solid var(--border)",
+              boxShadow: tab === "browse" ? "0 0 12px rgba(0,240,255,0.15)" : "none",
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ color: tab === "browse" ? "var(--accent)" : "var(--muted)", flexShrink: 0 }}>
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            <span className="text-sm font-semibold" style={{ color: tab === "browse" ? "var(--accent)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
+              Browse
+            </span>
+            {!isLoading && filteredPois.length > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: tab === "browse" ? "rgba(0,240,255,0.15)" : "var(--border)", color: tab === "browse" ? "var(--accent)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
+                {filteredPois.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setTab("controls")}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all"
+            style={{
+              background: tab === "controls" ? "rgba(255,45,120,0.1)" : "var(--input-bg)",
+              border: tab === "controls" ? "1px solid var(--accent-secondary)" : "1px solid var(--border)",
+              boxShadow: tab === "controls" ? "0 0 12px rgba(255,45,120,0.15)" : "none",
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ color: tab === "controls" ? "var(--accent-secondary)" : "var(--muted)", flexShrink: 0 }}>
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            <span className="text-sm font-semibold" style={{ color: tab === "controls" ? "var(--accent-secondary)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
+              My List
+            </span>
+            {props.shortlist.length > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: tab === "controls" ? "rgba(255,45,120,0.2)" : "var(--border)", color: tab === "controls" ? "var(--accent-secondary)" : "var(--muted)", fontFamily: "var(--font-dm-sans)" }}>
+                {props.shortlist.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* ── Content ── */}
+        <div className="flex-1 min-h-0 flex flex-col overflow-y-auto">
+          {tab === "controls" ? (
+            <>
+              <Sidebar {...props} hideHeader scrollable onBrowse={() => { setTab("browse"); if (!expanded) onExpandedChange(true); }} />
+              <div className="px-4 pt-2 pb-2 flex-shrink-0">
+                <AdUnit slot="2261277039" format="horizontal" />
+              </div>
+              <div style={{ height: "24px", flexShrink: 0 }} />
+            </>
+          ) : (
+            <BrowsePanel
+              pois={filteredPois}
+              isLoading={isLoading}
+              highlightedPoiId={props.highlightedPoiId}
+              hasCity={selectedCity != null}
+              shortlistIds={shortlistIds}
+              onAddToShortlist={onAddToShortlist}
+              onRemoveFromShortlist={onRemoveFromShortlist}
+              onHighlight={onHighlight}
+              fullWidth
+              nearMe={nearMe}
+              onNearMeToggle={onNearMeToggle}
+              userLocation={userLocation}
+              onPoiClick={onPoiClick}
+              cityName={cityName ?? selectedCity?.name}
+              onDetailStateChange={setDetailOpen}
+            />
+          )}
+        </div>
+      </div>
     </>
   );
 }

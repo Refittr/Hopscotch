@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { POI } from "@/types/poi";
 import POICard from "./POICard";
 import POIDetailCard, { type PlaceDetails } from "./POIDetailCard";
@@ -21,6 +21,7 @@ interface Props {
   userLocation?: { lat: number; lng: number } | null;
   onPoiClick?: (poi: POI) => void;
   cityName?: string;
+  onDetailStateChange?: (open: boolean) => void;
 }
 
 function SkeletonCard() {
@@ -54,11 +55,37 @@ export default function BrowsePanel({
   userLocation,
   onPoiClick,
   cityName,
+  onDetailStateChange,
 }: Props) {
   const [search, setSearch] = useState("");
   const [selectedPoi, setSelectedPoi] = useState<POI | null>(null);
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
   const detailsCache = useRef<Map<string, PlaceDetails>>(new Map());
+  const selectedPoiRef = useRef<POI | null>(null);
+
+  // Keep ref in sync for stale-closure-free popstate handler
+  useEffect(() => { selectedPoiRef.current = selectedPoi; }, [selectedPoi]);
+
+  // Notify parent of detail open state + push history when detail opens
+  useEffect(() => {
+    onDetailStateChange?.(selectedPoi !== null);
+    if (selectedPoi) {
+      history.pushState({ hopspot: "detail" }, "");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPoi?.placeId]);
+
+  // Back button closes detail card
+  useEffect(() => {
+    const handler = () => {
+      if (selectedPoiRef.current) {
+        setSelectedPoi(null);
+        onHighlight(null);
+      }
+    };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, [onHighlight]);
 
   const filtered = search.trim()
     ? pois.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
@@ -274,7 +301,7 @@ export default function BrowsePanel({
           isShortlisted={shortlistIds.has(selectedPoi.placeId)}
           distanceMi={getDistMi(selectedPoi.placeId)}
           cityName={cityName}
-          onClose={() => { setSelectedPoi(null); onHighlight(null); }}
+          onClose={() => { history.back(); }}
           onAdd={onAddToShortlist}
           onRemove={(id) => onRemoveFromShortlist?.(id)}
         />

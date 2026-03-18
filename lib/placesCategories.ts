@@ -6,6 +6,7 @@ export const NEARBY_TYPES = [
   "park", "zoo", "aquarium", "amusement_park", "restaurant", "cafe",
   "bakery", "bar", "night_club", "shopping_mall", "book_store",
   "bowling_alley", "movie_theater", "spa", "stadium", "gym",
+  "establishment",
 ] as const;
 
 // ── Text Search queries ──────────────────────────────────────────────────────
@@ -21,8 +22,13 @@ export const TEXT_SEARCHES: { query: string; tag: string }[] = [
   { query: "off the beaten path",  tag: "hidden_gem"  },
   { query: "comedy clubs",         tag: "comedy"      },
   { query: "gardens",              tag: "garden"      },
-  { query: "gay bar",                   tag: "lgbtq"  },
-  { query: "LGBT venue",               tag: "lgbtq"  },
+  { query: "gay bar",              tag: "lgbtq"       },
+  { query: "LGBT venue",           tag: "lgbtq"       },
+  { query: "popular venues",       tag: "things_to_do" },
+  { query: "food halls",           tag: "food_hall"   },
+  { query: "rooftop bars",         tag: "rooftop"     },
+  { query: "best restaurants",     tag: "restaurant"  },
+  { query: "new openings",         tag: "new_opening" },
 ];
 
 // ── Vibe chip definitions ─────────────────────────────────────────────────────

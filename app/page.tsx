@@ -84,6 +84,15 @@ export default function Home() {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  // ── Mobile sheet ────────────────────────────────────────────────────────
+  const [sheetExpanded, setSheetExpanded] = useState(false);
+  useEffect(() => {
+    if (isMobile) history.replaceState({ hopspot: "base" }, "");
+  }, [isMobile]);
+
+  const routeStateRef = useRef(routeState);
+  useEffect(() => { routeStateRef.current = routeState; }, [routeState]);
+
   // ── Derived ─────────────────────────────────────────────────────────────
   const shortlistIds = useMemo(
     () => new Set(shortlist.map((p) => p.placeId)),
@@ -126,7 +135,7 @@ export default function Home() {
       setActiveVibes(new Set());
     } else {
       // Pre-select popular filters so the map doesn't flood with every POI
-      setActiveVibes(new Set(["Historical", "Arts & Culture", "Outdoors", "Food"]));
+      setActiveVibes(new Set(["Food", "Drinks & Nightlife"]));
     }
   }, []);
 
@@ -238,6 +247,8 @@ export default function Home() {
   // ── Route callbacks ─────────────────────────────────────────────────────
   const handleStartRoute = useCallback(() => {
     setRouteState({ phase: "picking_start" });
+    setSheetExpanded(true);
+    history.pushState({ hopspot: "route" }, "");
   }, []);
 
   const handlePickStart = useCallback(
@@ -426,7 +437,16 @@ export default function Home() {
   const handleBackToPlanning = useCallback(() => {
     aiCallKeyRef.current = "";
     setRouteState(null);
+    setSheetExpanded(false);
   }, []);
+
+  // Back button: exit route mode on mobile
+  useEffect(() => {
+    if (!isMobile) return;
+    const handler = () => { if (routeStateRef.current) handleBackToPlanning(); };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, [isMobile, handleBackToPlanning]);
 
   // ── Prop bundles ────────────────────────────────────────────────────────
   const sidebarProps = {
@@ -517,10 +537,27 @@ export default function Home() {
       ) : (
         /* ── Mobile layout ── */
         <div className="flex flex-col h-screen" style={{ overflow: "clip" }}>
-          <div style={{ height: "calc(38vh - 30px)", flexShrink: 0, position: "relative", overflow: "clip" }}>
+          <div
+            style={{
+              flexShrink: 0,
+              position: "relative",
+              overflow: "clip",
+              height: sheetExpanded ? "25vh" : "calc(100vh - 160px)",
+              transition: "height 300ms ease-out",
+            }}
+          >
             {mapArea}
           </div>
-          <div style={{ height: "calc(62vh + 30px)", overflow: "clip", display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              flexShrink: 0,
+              overflow: "clip",
+              display: "flex",
+              flexDirection: "column",
+              height: sheetExpanded ? "75vh" : "160px",
+              transition: "height 300ms ease-out",
+            }}
+          >
             {routeState ? (
               <RouteMode
                 routeState={routeState}
@@ -539,7 +576,11 @@ export default function Home() {
                 onToast={pushToast}
               />
             ) : (
-              <MobileSidebar {...sidebarProps} />
+              <MobileSidebar
+                {...sidebarProps}
+                expanded={sheetExpanded}
+                onExpandedChange={setSheetExpanded}
+              />
             )}
           </div>
         </div>
