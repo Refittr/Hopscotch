@@ -587,7 +587,7 @@ export default function Home() {
       )}
 
       <Toast
-        message="Max 15 spots per route"
+        message="Max 15 spots per route."
         visible={showMaxToast}
         onDone={() => setShowMaxToast(false)}
       />
